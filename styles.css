@@ -246,7 +246,7 @@ body {
 .shortcut-hint {
     font-size: 11px;
     color: var(--text-secondary);
-    line-height: 1.4;
+    line-height: 2.4;
 }
 
 .hint-text {

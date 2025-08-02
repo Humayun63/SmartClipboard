@@ -49,6 +49,8 @@ function createWindow() {
     titleBarStyle: 'default'
   });
 
+  
+
   mainWindow.loadFile('index.html');
 
   // Show window when ready
