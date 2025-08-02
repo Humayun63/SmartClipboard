@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Clipboard</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <div class="header">
+            <div class="title">
+                <span class="icon">📋</span>
+                <span class="text">Smart Clipboard</span>
+            </div>
+            <div class="controls">
+                <button class="btn-clear" title="Clear History">🗑️</button>
+                <button class="btn-settings" title="Settings">⚙️</button>
+            </div>
+        </div>
+
+        <!-- Search Bar -->
+        <div class="search-container">
+            <input type="text" class="search-input" placeholder="Search clipboard history..." />
+        </div>
+
+        <!-- Clipboard History List -->
+        <div class="history-container">
+            <div class="history-list" id="historyList">
+                <!-- Items will be populated by JavaScript -->
+            </div>
+        </div>
+
+        <!-- Empty State -->
+        <div class="empty-state" id="emptyState">
+            <div class="empty-icon">📋</div>
+            <div class="empty-text">No clipboard history yet</div>
+            <div class="empty-subtext">Copy some text to get started!</div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="quick-actions">
+            <div class="shortcut-hint">
+                <span class="hint-text">Shortcuts:</span>
+                <span class="shortcut">⌘⌥V</span> - Paste Menu
+                <span class="shortcut">⌘V+1-9</span> - Quick Paste
+                <span class="shortcut">⌘⇧V</span> - Show History
+            </div>
+        </div>
+    </div>
+
+    <!-- Paste Menu Overlay -->
+    <div class="paste-menu-overlay" id="pasteMenuOverlay">
+        <div class="paste-menu">
+            <div class="paste-menu-header">
+                <span class="paste-menu-title">Select item to paste:</span>
+                <button class="paste-menu-close" id="pasteMenuClose">✕</button>
+            </div>
+            <div class="paste-menu-list" id="pasteMenuList">
+                <!-- Paste menu items will be populated by JavaScript -->
+            </div>
+        </div>
+    </div>
+
+    <script src="renderer.js"></script>
+</body>
+</html> 
