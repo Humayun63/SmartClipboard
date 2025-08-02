@@ -12,6 +12,7 @@ const maxHistorySize = document.getElementById('maxHistorySize');
 const pasteMenuTimeout = document.getElementById('pasteMenuTimeout');
 const autoStart = document.getElementById('autoStart');
 const showTrayIcon = document.getElementById('showTrayIcon');
+const themeSelect = document.getElementById('theme');
 
 // Initialize settings
 document.addEventListener('DOMContentLoaded', async () => {
@@ -22,6 +23,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     pasteMenuTimeout.value = settings.pasteMenuTimeout || 3;
     autoStart.checked = settings.autoStart || false;
     showTrayIcon.checked = settings.showTrayIcon !== false; // Default to true
+    themeSelect.value = settings.theme || 'light';
     
     setupEventListeners();
 });
@@ -39,7 +41,8 @@ function setupEventListeners() {
             maxHistorySize: parseInt(maxHistorySize.value),
             pasteMenuTimeout: parseInt(pasteMenuTimeout.value),
             autoStart: autoStart.checked,
-            showTrayIcon: showTrayIcon.checked
+            showTrayIcon: showTrayIcon.checked,
+            theme: themeSelect.value
         };
         
         await ipcRenderer.invoke('save-settings', settings);

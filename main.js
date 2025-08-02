@@ -54,6 +54,12 @@ function createWindow() {
   // Show window when ready
   mainWindow.once('ready-to-show', () => {
     mainWindow.show();
+    
+    // Apply saved theme
+    const settings = store.get('settings', {});
+    if (settings.theme) {
+      mainWindow.webContents.send('theme-changed', settings.theme);
+    }
   });
 
   // Handle window close
@@ -146,6 +152,7 @@ function createTray() {
   tray.setContextMenu(contextMenu);
   tray.setToolTip('Smart Clipboard');
   
+  // Left click shows the app, right click shows context menu
   tray.on('click', () => {
     mainWindow.show();
     mainWindow.focus();
@@ -189,15 +196,16 @@ function showClipboardNotification(content) {
     title: 'Smart Clipboard',
     body: `Captured: ${content.substring(0, 50)}${content.length > 50 ? '...' : ''}`,
     icon: path.join(__dirname, 'icon.png'),
-    silent: true
+    silent: false
   });
   
+  // Show notification immediately
   notification.show();
   
-  // Auto-dismiss after 2 seconds
+  // Auto-dismiss after 3 seconds
   setTimeout(() => {
     notification.close();
-  }, 2000);
+  }, 3000);
 }
 
 // Register global shortcuts
@@ -248,7 +256,10 @@ function quickPaste(index) {
     // Simulate paste using a more reliable method
     try {
       const robot = require('robotjs');
-      robot.keyTap('v', ['command']);
+      // Small delay to ensure clipboard is updated
+      setTimeout(() => {
+        robot.keyTap('v', ['command']);
+      }, 100);
     } catch (error) {
       console.log('RobotJS not available, using clipboard only');
       // Fallback: just copy to clipboard, user can paste manually
@@ -310,6 +321,14 @@ ipcMain.handle('get-settings', () => {
 
 ipcMain.handle('save-settings', (event, settings) => {
   store.set('settings', settings);
+  
+  // Apply theme if changed
+  if (settings.theme) {
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.webContents.send('theme-changed', settings.theme);
+    }
+  }
+  
   return true;
 });
 

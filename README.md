@@ -20,6 +20,11 @@ A powerful, responsive clipboard manager desktop app built with Electron that en
 - **Cmd+Shift+3** → Paste third most recent item
 - And so on up to **Cmd+Shift+9**
 
+### 🎨 Theme Support
+- **Light Theme**: Clean, modern light interface
+- **Dark Theme**: Easy on the eyes dark mode
+- **Midnight Developer**: Classic terminal-style green theme
+
 ### 🔍 Search & Navigation
 - Real-time search through clipboard history
 - Keyboard navigation (Arrow keys, Enter, Escape)
@@ -76,6 +81,11 @@ npm run dist
 - `Escape` - Close windows/menus
 - `Arrow keys` - Navigate through items
 - `Enter` - Paste selected item
+
+### 🎨 Themes
+- **Light**: Default clean interface
+- **Dark**: Easy on the eyes
+- **Midnight Developer**: Terminal-style green theme
 
 ## Configuration
 

@@ -35,6 +35,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     ipcRenderer.on('show-paste-menu', (event, history) => {
         showPasteMenu(history);
     });
+    
+    // Listen for theme changes
+    ipcRenderer.on('theme-changed', (event, theme) => {
+        document.documentElement.setAttribute('data-theme', theme);
+    });
 });
 
 // Set up event listeners
@@ -212,8 +217,8 @@ function renderHistory() {
                     <div class="history-item-preview">${escapeHtml(preview)}</div>
                 </div>
                 <div class="history-item-actions">
-                    <button class="btn-paste" title="Paste">📋</button>
-                    <button class="btn-remove" title="Remove">🗑️</button>
+                    <button class="btn-paste" title="Paste">📄</button>
+                    <button class="btn-remove" title="Remove">❌</button>
                 </div>
             </div>
         `;
