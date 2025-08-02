@@ -1,4 +1,4 @@
-const { app, BrowserWindow, globalShortcut, clipboard, ipcMain, screen, Menu, Tray, nativeImage, Notification } = require('electron');
+const { app, BrowserWindow, globalShortcut, clipboard, ipcMain, screen, Menu, Tray, nativeImage, Notification, shell } = require('electron');
 const path = require('path');
 const Store = require('electron-store');
 
@@ -114,7 +114,15 @@ function openSettingsWindow() {
 // Create system tray
 function createTray() {
   const iconPath = path.join(__dirname, 'icon.png');
-  const icon = nativeImage.createFromPath(iconPath);
+  let icon;
+  
+  try {
+    icon = nativeImage.createFromPath(iconPath);
+  } catch (error) {
+    // Fallback to a simple icon if file doesn't exist
+    console.log('Icon file not found, using default icon');
+    icon = nativeImage.createFromDataURL('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTYiIGhlaWdodD0iMTYiIHZpZXdCb3g9IjAgMCAxNiAxNiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjE2IiBoZWlnaHQ9IjE2IiByeD0iMiIgZmlsbD0iIzY2N2VlYSIvPgo8cGF0aCBkPSJNNCw0IEgxMiBNNCw2IEgxMiBNNCw4IEgxMCBNNCwxMCBIMTIiIHN0cm9rZT0id2hpdGUiIHN0cm9rZS13aWR0aD0iMSIvPgo8L3N2Zz4K');
+  }
   
   tray = new Tray(icon.resize({ width: 16, height: 16 }));
   
@@ -253,15 +261,25 @@ function showPasteMenu() {
 function quickPaste(index) {
   if (clipboardHistory.length >= index) {
     const content = clipboardHistory[index - 1];
+    
+    // Store current clipboard content
+    const originalClipboard = clipboard.readText();
+    
+    // Set new content to clipboard
     clipboard.writeText(content);
     
     // Simulate paste using a more reliable method
     try {
       const robot = require('robotjs');
-      // Small delay to ensure clipboard is updated
+      // Longer delay to ensure clipboard is updated
       setTimeout(() => {
         robot.keyTap('v', ['command']);
-      }, 100);
+        
+        // Restore original clipboard after a delay
+        setTimeout(() => {
+          clipboard.writeText(originalClipboard);
+        }, 500);
+      }, 200);
     } catch (error) {
       console.log('RobotJS not available, using clipboard only');
       // Fallback: just copy to clipboard, user can paste manually
@@ -289,12 +307,24 @@ ipcMain.handle('remove-item', (event, index) => {
 ipcMain.handle('paste-item', (event, index) => {
   if (clipboardHistory[index]) {
     const content = clipboardHistory[index];
+    
+    // Store current clipboard content
+    const originalClipboard = clipboard.readText();
+    
+    // Set new content to clipboard
     clipboard.writeText(content);
     
     // Simulate paste using a more reliable method
     try {
       const robot = require('robotjs');
-      robot.keyTap('v', ['command']);
+      setTimeout(() => {
+        robot.keyTap('v', ['command']);
+        
+        // Restore original clipboard after a delay
+        setTimeout(() => {
+          clipboard.writeText(originalClipboard);
+        }, 500);
+      }, 200);
     } catch (error) {
       console.log('RobotJS not available, using clipboard only');
       // Fallback: just copy to clipboard, user can paste manually
@@ -347,6 +377,10 @@ ipcMain.handle('open-settings', () => {
 ipcMain.handle('quit-app', () => {
   app.isQuiting = true;
   app.quit();
+});
+
+ipcMain.handle('open-external-link', (event, url) => {
+  shell.openExternal(url);
 });
 
 // App lifecycle
