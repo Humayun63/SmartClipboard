@@ -28,15 +28,126 @@
     --accent-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
 }
 
-/* Midnight Developer Theme */
+/* Cyber Neon Theme */
+/* A deep, elegant dark base with neon cyan accents, perfect for night coders. */
 [data-theme="midnight"] {
-    --bg-primary: #0a0a0a;
-    --bg-secondary: #1a1a1a;
-    --text-primary: #00ff00;
-    --text-secondary: #00cc00;
-    --border-color: #333333;
-    --accent-color: #00ff00;
-    --accent-gradient: linear-gradient(135deg, #00ff00 0%, #00cc00 100%);
+    --bg-primary: #0D1117;
+    --bg-secondary: #161B22;
+    --text-primary: #C9D1D9;
+    --text-secondary: #8B949E;
+    --border-color: #21262D;
+    --accent-color: #39D3F0;
+    --accent-gradient: linear-gradient(135deg, #39D3F0 0%, #2188ff 100%);
+}
+
+/* 1. Solaris */
+[data-theme="solaris"] {
+    --bg-primary: #FFF8E1;
+    --bg-secondary: #FFECB3;
+    --text-primary: #4E342E;
+    --text-secondary: #795548;
+    --border-color: #FFD54F;
+    --accent-color: #FF8F00;
+    --accent-gradient: linear-gradient(135deg, #FFB300 0%, #FF6F00 100%);
+}
+
+/* 2. Kyoto Garden */
+[data-theme="kyoto"] {
+    --bg-primary: #F5F5F5;
+    --bg-secondary: #E0E0E0;
+    --text-primary: #333333;
+    --text-secondary: #666666;
+    --border-color: #BDBDBD;
+    --accent-color: #4CAF50;
+    --accent-gradient: linear-gradient(135deg, #66BB6A 0%, #388E3C 100%);
+}
+
+/* 3. Retro Groove */
+[data-theme="retro"] {
+    --bg-primary: #ECEFF1;
+    --bg-secondary: #CFD8DC;
+    --text-primary: #37474F;
+    --text-secondary: #546E7A;
+    --border-color: #B0BEC5;
+    --accent-color: #FF7043;
+    --accent-gradient: linear-gradient(135deg, #FF7043 0%, #F4511E 100%);
+}
+
+/* 4. Oceanic */
+[data-theme="oceanic"] {
+    --bg-primary: #E3F2FD;
+    --bg-secondary: #BBDEFB;
+    --text-primary: #0D47A1;
+    --text-secondary: #1976D2;
+    --border-color: #90CAF9;
+    --accent-color: #2196F3;
+    --accent-gradient: linear-gradient(135deg, #42A5F5 0%, #1E88E5 100%);
+}
+
+/* 5. Sakura Dream */
+[data-theme="sakura"] {
+    --bg-primary: #FFF0F5;
+    --bg-secondary: #FFE4E1;
+    --text-primary: #6A5ACD;
+    --text-secondary: #9370DB;
+    --border-color: #FFC0CB;
+    --accent-color: #FF69B4;
+    --accent-gradient: linear-gradient(135deg, #FF69B4 0%, #DB7093 100%);
+}
+
+/* 6. Matrix */
+[data-theme="matrix"] {
+    --bg-primary: #000000;
+    --bg-secondary: #0D0D0D;
+    --text-primary: #00FF00;
+    --text-secondary: #008F11;
+    --border-color: #003B00;
+    --accent-color: #00FF00;
+    --accent-gradient: linear-gradient(135deg, #00FF00 0%, #008F11 100%);
+}
+
+/* 7. 8-Bit */
+[data-theme="8bit"] {
+    --bg-primary: #2F3542;
+    --bg-secondary: #57606F;
+    --text-primary: #FFFFFF;
+    --text-secondary: #A4B0BE;
+    --border-color: #747D8C;
+    --accent-color: #FF4757;
+    --accent-gradient: linear-gradient(135deg, #FF4757 0%, #E84118 100%);
+}
+
+/* 8. Monochrome */
+[data-theme="monochrome"] {
+    --bg-primary: #FFFFFF;
+    --bg-secondary: #F5F5F5;
+    --text-primary: #000000;
+    --text-secondary: #666666;
+    --border-color: #E0E0E0;
+    --accent-color: #333333;
+    --accent-gradient: linear-gradient(135deg, #444444 0%, #111111 100%);
+}
+
+/* 9. Golden Hour */
+[data-theme="golden"] {
+    --bg-primary: #FFF3E0;
+    --bg-secondary: #FFE0B2;
+    --text-primary: #5D4037;
+    --text-secondary: #795548;
+    --border-color: #FFCC80;
+    --accent-color: #FF9800;
+    --accent-gradient: linear-gradient(135deg, #FFB74D 0%, #F57C00 100%);
+}
+
+/* 10. Cosmic */
+[data-theme="cosmic"] {
+    --bg-primary: #191D3A;
+    --bg-secondary: #24284B;
+    --text-primary: #E0E0E0;
+    --text-secondary: #A0A0A0;
+    --border-color: #3C426E;
+    --accent-color: #8E44AD;
+    --accent-gradient: linear-gradient(135deg, #9B59B6 0%, #3498DB 100%);
 }
 
 body {
