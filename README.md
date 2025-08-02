@@ -44,6 +44,9 @@ A powerful, responsive clipboard manager desktop app built with Electron that en
 
 ### Setup
 1. Clone or download this repository
+   ```bash
+   git clone https://github.com/Humayun63/SmartClipboard.git
+   ```
 2. Install dependencies:
    ```bash
    npm install
