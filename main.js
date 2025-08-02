@@ -231,9 +231,9 @@ function registerGlobalShortcuts() {
     showPasteMenu();
   });
   
-  // Cmd+Shift+1 through Cmd+Shift+9 for quick paste
+  // Cmd+Alt+1 through Cmd+Alt+9 for quick paste
   for (let i = 1; i <= 9; i++) {
-    globalShortcut.register(`CommandOrControl+Shift+${i}`, () => {
+    globalShortcut.register(`CommandOrControl+Alt+${i}`, () => {
       quickPaste(i);
     });
   }
@@ -385,6 +385,16 @@ ipcMain.handle('open-external-link', (event, url) => {
 
 // App lifecycle
 app.whenReady().then(() => {
+  // Hide from the Dock
+  if (app.dock) app.dock.hide();
+
+  // Enable auto-launch at login
+  app.setLoginItemSettings({
+    openAtLogin: true,
+    openAsHidden: true,
+    path: app.getPath('exe'),
+  });
+  
   createWindow();
   createTray();
   startClipboardMonitoring();
