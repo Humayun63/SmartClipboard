@@ -138,6 +138,16 @@ SmartClipboard/
 
 ## Troubleshooting
 
+### macOS Security Warning
+If you see this message: "Smart Clipboard" is damaged and can't be opened. You should move it to the Bin.
+
+This is a macOS security feature. To fix it:
+1. Open Terminal
+2. Run the following command:
+   ```bash
+   xattr -cr /Applications/Smart\ Clipboard.app
+   ```
+
 ### Common Issues
 1. **Shortcuts not working**: Ensure the app has accessibility permissions
 2. **Clipboard not updating**: Check if another app is interfering
@@ -169,4 +179,4 @@ For issues, feature requests, or questions:
 
 ---
 
-**Note**: This app enhances your system's clipboard functionality. Use responsibly and be aware of what you copy, as it's stored locally on your device. 
+**Note**: This app enhances your system's clipboard functionality. Use responsibly and be aware of what you copy, as it's stored locally on your device.
