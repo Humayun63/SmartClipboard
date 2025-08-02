@@ -385,6 +385,16 @@ ipcMain.handle('open-external-link', (event, url) => {
 
 // App lifecycle
 app.whenReady().then(() => {
+  // Hide from the Dock
+  if (app.dock) app.dock.hide();
+
+  // Enable auto-launch at login
+  app.setLoginItemSettings({
+    openAtLogin: true,
+    openAsHidden: true,
+    path: app.getPath('exe'),
+  });
+  
   createWindow();
   createTray();
   startClipboardMonitoring();
