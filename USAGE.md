@@ -22,10 +22,10 @@
 - **Auto-paste**: Selected item is automatically pasted
 
 ### Quick Paste Shortcuts
-- **Cmd+Shift+1** → Paste most recent item
-- **Cmd+Shift+2** → Paste second most recent item
-- **Cmd+Shift+3** → Paste third most recent item
-- ...and so on up to **Cmd+Shift+9**
+- **Cmd+Alt+1** → Paste most recent item
+- **Cmd+Alt+2** → Paste second most recent item
+- **Cmd+Alt+3** → Paste third most recent item
+- ...and so on up to **Cmd+Alt+9**
 
 ### System Tray Integration
 - **Click tray icon** → Show clipboard history

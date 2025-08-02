@@ -231,9 +231,9 @@ function registerGlobalShortcuts() {
     showPasteMenu();
   });
   
-  // Cmd+Shift+1 through Cmd+Shift+9 for quick paste
+  // Cmd+Alt+1 through Cmd+Alt+9 for quick paste
   for (let i = 1; i <= 9; i++) {
-    globalShortcut.register(`CommandOrControl+Shift+${i}`, () => {
+    globalShortcut.register(`CommandOrControl+Alt+${i}`, () => {
       quickPaste(i);
     });
   }
