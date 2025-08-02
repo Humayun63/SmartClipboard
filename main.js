@@ -1,4 +1,4 @@
-const { app, BrowserWindow, globalShortcut, clipboard, ipcMain, screen, Menu, Tray, nativeImage } = require('electron');
+const { app, BrowserWindow, globalShortcut, clipboard, ipcMain, screen, Menu, Tray, nativeImage, Notification } = require('electron');
 const path = require('path');
 const Store = require('electron-store');
 
@@ -32,30 +32,31 @@ function createWindow() {
     height: 600,
     x: width - 420,
     y: height - 620,
-    frame: false,
-    resizable: false,
-    alwaysOnTop: true,
-    skipTaskbar: true,
+    frame: true,
+    resizable: true,
+    minimizable: true,
+    maximizable: false,
+    alwaysOnTop: false,
+    skipTaskbar: false,
     show: false,
+    title: 'Smart Clipboard',
+    icon: path.join(__dirname, 'icon.png'),
     webPreferences: {
       nodeIntegration: true,
       contextIsolation: false,
       enableRemoteModule: true
     },
-    transparent: true,
-    hasShadow: false
+    titleBarStyle: 'default'
   });
 
   mainWindow.loadFile('index.html');
 
-  // Hide window on blur
-  mainWindow.on('blur', () => {
-    if (!isPasteMenuVisible) {
-      mainWindow.hide();
-    }
+  // Show window when ready
+  mainWindow.once('ready-to-show', () => {
+    mainWindow.show();
   });
 
-  // Prevent window from being closed
+  // Handle window close
   mainWindow.on('close', (event) => {
     if (!app.isQuiting) {
       event.preventDefault();
@@ -170,6 +171,9 @@ function startClipboardMonitoring() {
         store.set('clipboardHistory', clipboardHistory);
         lastClipboardContent = currentContent;
         
+        // Show notification
+        showClipboardNotification(currentContent);
+        
         // Update renderer if window is open
         if (mainWindow && !mainWindow.isDestroyed()) {
           mainWindow.webContents.send('update-history', clipboardHistory);
@@ -177,6 +181,23 @@ function startClipboardMonitoring() {
       }
     }
   }, 500); // Check every 500ms
+}
+
+// Show notification when clipboard content is captured
+function showClipboardNotification(content) {
+  const notification = new Notification({
+    title: 'Smart Clipboard',
+    body: `Captured: ${content.substring(0, 50)}${content.length > 50 ? '...' : ''}`,
+    icon: path.join(__dirname, 'icon.png'),
+    silent: true
+  });
+  
+  notification.show();
+  
+  // Auto-dismiss after 2 seconds
+  setTimeout(() => {
+    notification.close();
+  }, 2000);
 }
 
 // Register global shortcuts
@@ -192,9 +213,9 @@ function registerGlobalShortcuts() {
     showPasteMenu();
   });
   
-  // Cmd+V+1 through Cmd+V+9 for quick paste
+  // Cmd+Shift+1 through Cmd+Shift+9 for quick paste
   for (let i = 1; i <= 9; i++) {
-    globalShortcut.register(`CommandOrControl+V+${i}`, () => {
+    globalShortcut.register(`CommandOrControl+Shift+${i}`, () => {
       quickPaste(i);
     });
   }
@@ -300,6 +321,11 @@ ipcMain.handle('clear-all-data', () => {
 
 ipcMain.handle('open-settings', () => {
   openSettingsWindow();
+});
+
+ipcMain.handle('quit-app', () => {
+  app.isQuiting = true;
+  app.quit();
 });
 
 // App lifecycle

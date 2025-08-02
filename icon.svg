@@ -1,0 +1,31 @@
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#667eea;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#764ba2;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Background circle -->
+  <circle cx="256" cy="256" r="240" fill="url(#grad1)" stroke="#ffffff" stroke-width="8"/>
+  
+  <!-- Clipboard base -->
+  <rect x="160" y="120" width="192" height="240" rx="16" fill="#ffffff" stroke="#e0e0e0" stroke-width="4"/>
+  
+  <!-- Clipboard clip -->
+  <rect x="200" y="100" width="112" height="40" rx="20" fill="#ffffff" stroke="#e0e0e0" stroke-width="4"/>
+  
+  <!-- Lines representing text -->
+  <rect x="180" y="160" width="152" height="8" rx="4" fill="#667eea"/>
+  <rect x="180" y="180" width="120" height="8" rx="4" fill="#667eea"/>
+  <rect x="180" y="200" width="140" height="8" rx="4" fill="#667eea"/>
+  <rect x="180" y="220" width="100" height="8" rx="4" fill="#667eea"/>
+  <rect x="180" y="240" width="130" height="8" rx="4" fill="#667eea"/>
+  <rect x="180" y="260" width="110" height="8" rx="4" fill="#667eea"/>
+  <rect x="180" y="280" width="145" height="8" rx="4" fill="#667eea"/>
+  <rect x="180" y="300" width="95" height="8" rx="4" fill="#667eea"/>
+  
+  <!-- Smart indicator -->
+  <circle cx="320" cy="140" r="12" fill="#667eea"/>
+  <path d="M315 140 L318 143 L325 136" stroke="#ffffff" stroke-width="2" fill="none"/>
+</svg> 

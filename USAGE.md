@@ -6,7 +6,7 @@
 2. **Start the app**: `npm start`
 3. **Copy some text** - it's automatically saved to history
 4. **Press Cmd+Option+V** - see the smart paste menu
-5. **Use Cmd+V+1** through **Cmd+V+9** for quick pasting
+5. **Use Cmd+Shift+1** through **Cmd+Shift+9** for quick pasting
 
 ## 📋 Core Features
 
@@ -22,10 +22,10 @@
 - **Auto-paste**: Selected item is automatically pasted
 
 ### Quick Paste Shortcuts
-- **Cmd+V+1** → Paste most recent item
-- **Cmd+V+2** → Paste second most recent item
-- **Cmd+V+3** → Paste third most recent item
-- ...and so on up to **Cmd+V+9**
+- **Cmd+Shift+1** → Paste most recent item
+- **Cmd+Shift+2** → Paste second most recent item
+- **Cmd+Shift+3** → Paste third most recent item
+- ...and so on up to **Cmd+Shift+9**
 
 ### System Tray Integration
 - **Click tray icon** → Show clipboard history

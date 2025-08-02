@@ -197,6 +197,89 @@ body {
     background: #d70015;
 }
 
+.btn-quit {
+    background: #ff9500;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 12px 20px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-quit:hover {
+    background: #e6850e;
+}
+
+/* About Section */
+.about-info {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.app-info, .developer-info {
+    padding: 16px;
+    background: #f5f5f7;
+    border-radius: 8px;
+    border: 1px solid #e5e5e7;
+}
+
+.app-info h4, .developer-info h4 {
+    font-size: 16px;
+    font-weight: 600;
+    color: #1d1d1f;
+    margin-bottom: 8px;
+}
+
+.version {
+    font-size: 14px;
+    color: #86868b;
+    margin-bottom: 8px;
+}
+
+.description {
+    font-size: 14px;
+    color: #1d1d1f;
+    line-height: 1.4;
+}
+
+.developer-info p {
+    font-size: 14px;
+    color: #1d1d1f;
+    margin-bottom: 4px;
+}
+
+.social-links {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 12px;
+}
+
+.social-link {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #667eea;
+    text-decoration: none;
+    font-size: 14px;
+    padding: 8px 12px;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+}
+
+.social-link:hover {
+    background: rgba(102, 126, 234, 0.1);
+    color: #5a6fd8;
+}
+
+.social-icon {
+    font-size: 16px;
+}
+
 /* Footer */
 .settings-footer {
     display: flex;

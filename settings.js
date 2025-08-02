@@ -5,6 +5,7 @@ const btnClose = document.getElementById('btnClose');
 const btnSave = document.getElementById('btnSave');
 const btnCancel = document.getElementById('btnCancel');
 const btnClearData = document.getElementById('btnClearData');
+const btnQuit = document.getElementById('btnQuit');
 
 // Settings inputs
 const maxHistorySize = document.getElementById('maxHistorySize');
@@ -55,6 +56,13 @@ function setupEventListeners() {
         if (confirm('Are you sure you want to clear all clipboard history and settings? This action cannot be undone.')) {
             await ipcRenderer.invoke('clear-all-data');
             alert('All data has been cleared.');
+        }
+    });
+    
+    // Quit button
+    btnQuit.addEventListener('click', async () => {
+        if (confirm('Are you sure you want to quit Smart Clipboard?')) {
+            await ipcRenderer.invoke('quit-app');
         }
     });
     

@@ -15,10 +15,10 @@ A powerful, responsive clipboard manager desktop app built with Electron that en
 - Automatically pastes the selected content
 
 ### ⚡ Quick Paste Shortcuts
-- **Cmd+V+1** → Paste most recent item
-- **Cmd+V+2** → Paste second most recent item
-- **Cmd+V+3** → Paste third most recent item
-- And so on up to **Cmd+V+9**
+- **Cmd+Shift+1** → Paste most recent item
+- **Cmd+Shift+2** → Paste second most recent item
+- **Cmd+Shift+3** → Paste third most recent item
+- And so on up to **Cmd+Shift+9**
 
 ### 🔍 Search & Navigation
 - Real-time search through clipboard history
@@ -62,7 +62,7 @@ npm run dist
 ### Basic Operations
 1. **Copy text** - Any text you copy is automatically saved to history
 2. **Show paste menu** - Press `Cmd+Option+V` to see all recent clipboard items
-3. **Quick paste** - Use `Cmd+V+1` through `Cmd+V+9` for instant pasting
+3. **Quick paste** - Use `Cmd+Shift+1` through `Cmd+Shift+9` for instant pasting
 4. **Show history** - Press `Cmd+Shift+V` to open the full history window
 
 ### System Tray
@@ -71,7 +71,7 @@ npm run dist
 
 ### Keyboard Shortcuts
 - `Cmd+Option+V` - Show paste menu
-- `Cmd+V+1-9` - Quick paste by index
+- `Cmd+Shift+1-9` - Quick paste by index
 - `Cmd+Shift+V` - Show clipboard history window
 - `Escape` - Close windows/menus
 - `Arrow keys` - Navigate through items
