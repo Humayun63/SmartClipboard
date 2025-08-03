@@ -159,7 +159,7 @@ function createTray() {
     }
   ]);
   
-  tray.setContextMenu(contextMenu);
+  // tray.setContextMenu(contextMenu);
   tray.setToolTip('Smart Clipboard');
   
   // Left click shows the app, right click shows context menu
@@ -167,6 +167,10 @@ function createTray() {
     mainWindow.show();
     mainWindow.focus();
   });
+
+  tray.on('right-click', () => {
+    tray.popUpContextMenu(contextMenu);
+  })
 }
 
 // Monitor clipboard changes
