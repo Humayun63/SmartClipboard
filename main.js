@@ -9,7 +9,6 @@ const store = new Store({
     clipboardHistory: [],
     maxHistorySize: 50,
     settings: {
-      autoStart: true,
       showTrayIcon: true,
       pasteMenuTimeout: 3000
     }
@@ -355,7 +354,6 @@ ipcMain.handle('get-settings', () => {
   return store.get('settings', {
     maxHistorySize: 50,
     pasteMenuTimeout: 3,
-    autoStart: false,
     showTrayIcon: true
   });
 });
