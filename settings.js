@@ -10,7 +10,6 @@ const btnQuit = document.getElementById('btnQuit');
 // Settings inputs
 const maxHistorySize = document.getElementById('maxHistorySize');
 const pasteMenuTimeout = document.getElementById('pasteMenuTimeout');
-const autoStart = document.getElementById('autoStart');
 const themeSelect = document.getElementById('theme');
 
 // Initialize settings
@@ -20,7 +19,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     maxHistorySize.value = settings.maxHistorySize || 50;
     pasteMenuTimeout.value = settings.pasteMenuTimeout || 3;
-    autoStart.checked = settings.autoStart || false;
     themeSelect.value = settings.theme || 'light';
     
     // Apply current theme to settings window
@@ -41,7 +39,6 @@ function setupEventListeners() {
         const settings = {
             maxHistorySize: parseInt(maxHistorySize.value),
             pasteMenuTimeout: parseInt(pasteMenuTimeout.value),
-            autoStart: autoStart.checked,
             theme: themeSelect.value
         };
         
@@ -91,7 +88,6 @@ function setupSocialLinks() {
     const emailLink = document.querySelector('a[href^="mailto:"]');
     if (emailLink) {
         emailLink.addEventListener('click', (e) => {
-            e.preventDefault();
             const email = emailLink.href.replace('mailto:', '');
             navigator.clipboard.writeText(email).then(() => {
                 showNotification('Email copied to clipboard!');
