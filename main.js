@@ -128,7 +128,7 @@ function createTray() {
   
   const contextMenu = Menu.buildFromTemplate([
     {
-      label: 'Show Clipboard History',
+      label: 'Show History',
       click: () => {
         mainWindow.show();
         mainWindow.focus();
