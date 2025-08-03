@@ -22,6 +22,7 @@ let tray;
 let isPasteMenuVisible = false;
 let clipboardHistory = store.get('clipboardHistory', []);
 let lastClipboardContent = '';
+let settings = store.get('settings', {});
 
 // Create the main window
 function createWindow() {
@@ -120,7 +121,7 @@ function createTray() {
     icon = nativeImage.createFromPath(iconPath);
   } catch (error) {
     // Fallback to a simple icon if file doesn't exist
-    console.log('Icon file not found, using default icon');
+    console.error('Icon file not found, using default icon');
     icon = nativeImage.createFromDataURL('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTYiIGhlaWdodD0iMTYiIHZpZXdCb3g9IjAgMCAxNiAxNiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjE2IiBoZWlnaHQ9IjE2IiByeD0iMiIgZmlsbD0iIzY2N2VlYSIvPgo8cGF0aCBkPSJNNCw0IEgxMiBNNCw2IEgxMiBNNCw4IEgxMCBNNCwxMCBIMTIiIHN0cm9rZT0id2hpdGUiIHN0cm9rZS13aWR0aD0iMSIvPgo8L3N2Zz4K');
   }
   
@@ -285,7 +286,7 @@ function quickPaste(index) {
         }, 500);
       }, 200);
     } catch (error) {
-      console.log('RobotJS not available, using clipboard only');
+      console.error('RobotJS not available, using clipboard only');
       // Fallback: just copy to clipboard, user can paste manually
     }
   }
@@ -294,6 +295,10 @@ function quickPaste(index) {
 // IPC handlers
 ipcMain.handle('get-clipboard-history', () => {
   return clipboardHistory;
+});
+
+ipcMain.handle('get-clipboard-settings', () => {
+  return settings;
 });
 
 ipcMain.handle('clear-history', () => {
@@ -330,7 +335,7 @@ ipcMain.handle('paste-item', (event, index) => {
         }, 500);
       }, 200);
     } catch (error) {
-      console.log('RobotJS not available, using clipboard only');
+      console.error('RobotJS not available, using clipboard only');
       // Fallback: just copy to clipboard, user can paste manually
     }
     
@@ -403,19 +408,8 @@ app.whenReady().then(() => {
   createTray();
   startClipboardMonitoring();
   registerGlobalShortcuts();
-  
-  app.on('activate', () => {
-    if (BrowserWindow.getAllWindows().length === 0) {
-      createWindow();
-    }
-  });
 });
 
-app.on('window-all-closed', () => {
-  if (process.platform !== 'darwin') {
-    app.quit();
-  }
-});
 
 app.on('will-quit', () => {
   globalShortcut.unregisterAll();
