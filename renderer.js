@@ -17,6 +17,9 @@ let selectedIndex = -1;
 
 // Initialize
 document.addEventListener('DOMContentLoaded', async () => {
+    // Apply Saved Theme
+    await applyTheme();
+
     // Load initial clipboard history
     clipboardHistory = await ipcRenderer.invoke('get-clipboard-history');
     filteredHistory = [...clipboardHistory];
@@ -194,6 +197,14 @@ function filterHistory() {
         filteredHistory = clipboardHistory.filter(item => 
             item.toLowerCase().includes(searchTerm)
         );
+    }
+}
+
+// Apply Theme
+async function applyTheme () {
+    const settings = await ipcRenderer.invoke('get-clipboard-settings');
+    if(settings?.theme) {
+        document.documentElement.setAttribute('data-theme', settings.theme);
     }
 }
 
