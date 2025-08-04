@@ -261,8 +261,10 @@ function showPasteMenu() {
   }, store.get('settings.pasteMenuTimeout', 3000));
 }
 
+const { keyboard, Key } = require('@nut-tree-fork/nut-js');
+
 // Quick paste by index
-function quickPaste(index) {
+async function quickPaste(index) {
   if (clipboardHistory.length >= index) {
     const content = clipboardHistory[index - 1];
     
@@ -272,22 +274,18 @@ function quickPaste(index) {
     // Set new content to clipboard
     clipboard.writeText(content);
     
-    // Simulate paste using a more reliable method
+    // Simulate paste
     try {
-      const robot = require('robotjs');
-      // Longer delay to ensure clipboard is updated
-      setTimeout(() => {
-        robot.keyTap('v', ['command']);
-        
-        // Restore original clipboard after a delay
-        setTimeout(() => {
-          clipboard.writeText(originalClipboard);
-        }, 500);
-      }, 200);
+      await keyboard.pressKey(Key.LeftSuper, Key.V);
+      await keyboard.releaseKey(Key.LeftSuper, Key.V);
     } catch (error) {
-      console.error('RobotJS not available, using clipboard only');
-      // Fallback: just copy to clipboard, user can paste manually
+      console.error('Error simulating paste:', error);
     }
+    
+    // Restore original clipboard after a delay
+    setTimeout(() => {
+      clipboard.writeText(originalClipboard);
+    }, 500);
   }
 }
 
@@ -312,7 +310,7 @@ ipcMain.handle('remove-item', (event, index) => {
   return clipboardHistory;
 });
 
-ipcMain.handle('paste-item', (event, index) => {
+ipcMain.handle('paste-item', async (event, index) => {
   if (clipboardHistory[index]) {
     const content = clipboardHistory[index];
     
@@ -322,26 +320,31 @@ ipcMain.handle('paste-item', (event, index) => {
     // Set new content to clipboard
     clipboard.writeText(content);
     
-    // Simulate paste using a more reliable method
+    // Simulate paste
     try {
-      const robot = require('robotjs');
-      setTimeout(() => {
-        robot.keyTap('v', ['command']);
-        
-        // Restore original clipboard after a delay
-        setTimeout(() => {
-          clipboard.writeText(originalClipboard);
-        }, 500);
-      }, 200);
+      await keyboard.pressKey(Key.LeftSuper, Key.V);
+      await keyboard.releaseKey(Key.LeftSuper, Key.V);
     } catch (error) {
-      console.error('RobotJS not available, using clipboard only');
-      // Fallback: just copy to clipboard, user can paste manually
+      console.error('Error simulating paste:', error);
     }
+    
+    // Restore original clipboard after a delay
+    setTimeout(() => {
+      clipboard.writeText(originalClipboard);
+    }, 500);
     
     // Hide window after paste
     isPasteMenuVisible = false;
     mainWindow.hide();
   }
+});
+
+ipcMain.handle('show-notification', (event, message) => {
+  new Notification({
+    title: 'Smart Clipboard',
+    body: message,
+    icon: path.join(__dirname, 'icon.png')
+  }).show();
 });
 
 ipcMain.handle('hide-paste-menu', () => {

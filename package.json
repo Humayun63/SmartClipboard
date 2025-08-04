@@ -1,6 +1,6 @@
 {
   "name": "smart-clipboard",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "A smart clipboard manager with history and quick paste features",
   "main": "main.js",
   "scripts": {
@@ -8,7 +8,7 @@
     "dev": "electron . --dev",
     "build": "electron-builder",
     "dist": "electron-builder --publish=never",
-    "rebuild": "electron-rebuild -f -w robotjs"
+    "postinstall": "electron-builder install-app-deps"
   },
   "keywords": [
     "clipboard",
@@ -23,13 +23,12 @@
   },
   "license": "MIT",
   "devDependencies": {
-    "@electron/rebuild": "^4.0.1",
     "electron": "^28.0.0",
     "electron-builder": "^24.9.1"
   },
   "dependencies": {
-    "electron-store": "^8.1.0",
-    "robotjs": "^0.6.0"
+    "@nut-tree-fork/nut-js": "^4.1.0",
+    "electron-store": "^8.1.0"
   },
   "build": {
     "appId": "com.smartclipboard.app",

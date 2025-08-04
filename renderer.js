@@ -107,7 +107,7 @@ function handleMainWindowKeydown(e) {
         case 'Enter':
             e.preventDefault();
             if (selectedIndex >= 0 && selectedIndex < filteredHistory.length) {
-                pasteItem(selectedIndex);
+                copyItem(selectedIndex);
             }
             break;
     }
@@ -228,7 +228,7 @@ function renderHistory() {
                     <div class="history-item-preview">${escapeHtml(preview)}</div>
                 </div>
                 <div class="history-item-actions">
-                    <button class="btn-paste" title="Paste">📄</button>
+                    <button class="btn-copy" title="Copy">📋</button>
                     <button class="btn-remove" title="Remove">❌</button>
                 </div>
             </div>
@@ -239,16 +239,16 @@ function renderHistory() {
     const items = historyList.querySelectorAll('.history-item');
     items.forEach((item, index) => {
         item.addEventListener('click', () => {
-            pasteItem(index);
+            copyItem(index);
         });
         
         // Add action button listeners
-        const btnPaste = item.querySelector('.btn-paste');
+        const btnCopy = item.querySelector('.btn-copy');
         const btnRemove = item.querySelector('.btn-remove');
         
-        btnPaste.addEventListener('click', (e) => {
+        btnCopy.addEventListener('click', (e) => {
             e.stopPropagation();
-            pasteItem(index);
+            copyItem(index);
         });
         
         btnRemove.addEventListener('click', async (e) => {
@@ -263,23 +263,18 @@ function renderHistory() {
     });
 }
 
-// Paste item from main window
-async function pasteItem(index) {
+// Copy item from main window
+async function copyItem(index) {
     if (index >= 0 && index < filteredHistory.length) {
-        const originalIndex = clipboardHistory.indexOf(filteredHistory[index]);
-        if (originalIndex !== -1) {
-            await ipcRenderer.invoke('paste-item', originalIndex);
-        }
+        const textToCopy = filteredHistory[index];
+        await navigator.clipboard.writeText(textToCopy);
+        await ipcRenderer.invoke('show-notification', 'Copied to clipboard!');
+        window.close();
     }
 }
 
-// Paste item from paste menu
-async function pasteItemFromMenu(index) {
-    if (index >= 0 && index < clipboardHistory.length) {
-        await ipcRenderer.invoke('paste-item', index);
-        hidePasteMenu();
-    }
-}
+
+
 
 // Show paste menu
 function showPasteMenu(history) {
