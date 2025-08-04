@@ -192,16 +192,13 @@ function startClipboardMonitoring() {
         store.set('clipboardHistory', clipboardHistory);
         lastClipboardContent = currentContent;
         
-        // Show notification
-        showClipboardNotification(currentContent);
-        
         // Update renderer if window is open
         if (mainWindow && !mainWindow.isDestroyed()) {
           mainWindow.webContents.send('update-history', clipboardHistory);
         }
       }
     }
-  }, 500); // Check every 500ms
+  }, 200); // Check every 500ms
 }
 
 // Show notification when clipboard content is captured
