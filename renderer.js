@@ -3,13 +3,16 @@ const { ipcRenderer } = require('electron');
 // DOM elements
 const historyList = document.getElementById('historyList');
 const pinnedList = document.getElementById('pinnedList');
-const emptyState = document.getElementById('emptyState');
+const emptyStateHistory = document.getElementById('emptyStateHistory');
+const emptyStatePinned = document.getElementById('emptyStatePinned');
 const searchInput = document.querySelector('.search-input');
 const btnClear = document.querySelector('.btn-clear');
 const btnSettings = document.querySelector('.btn-settings');
 const pasteMenuOverlay = document.getElementById('pasteMenuOverlay');
 const pasteMenuList = document.getElementById('pasteMenuList');
 const pasteMenuClose = document.getElementById('pasteMenuClose');
+const tabButtons = document.querySelectorAll('.tab-btn');
+const tabPanes = document.querySelectorAll('.tab-pane');
 
 // Pin Modal elements
 const pinModalOverlay = document.getElementById('pinModalOverlay');
@@ -100,6 +103,23 @@ function setupEventListeners() {
     pinModalClose.addEventListener('click', closePinModal);
     pinModalCancel.addEventListener('click', closePinModal);
     pinForm.addEventListener('submit', handlePinFormSubmit);
+
+    // Tab navigation
+    tabButtons.forEach(button => {
+        button.addEventListener('click', () => {
+            const tab = button.dataset.tab;
+            switchTab(tab);
+        });
+    });
+}
+
+function switchTab(tab) {
+    tabButtons.forEach(button => {
+        button.classList.toggle('active', button.dataset.tab === tab);
+    });
+    tabPanes.forEach(pane => {
+        pane.classList.toggle('active', pane.id === `${tab}Tab`);
+    });
 }
 
 // Handle keyboard navigation
@@ -234,10 +254,12 @@ async function applyTheme () {
 function renderPinnedHistory() {
     if (pinnedHistory.length === 0) {
         pinnedList.style.display = 'none';
+        emptyStatePinned.style.display = 'flex';
         return;
     }
 
     pinnedList.style.display = 'block';
+    emptyStatePinned.style.display = 'none';
     pinnedList.innerHTML = pinnedHistory.map((item, index) => {
         return `
             <div class="pinned-item" data-index="${index}">
@@ -281,14 +303,14 @@ function renderPinnedHistory() {
 
 // Render history list
 function renderHistory() {
-    if (filteredHistory.length === 0 && pinnedHistory.length === 0) {
+    if (filteredHistory.length === 0) {
         historyList.style.display = 'none';
-        emptyState.style.display = 'flex';
+        emptyStateHistory.style.display = 'flex';
         return;
     }
     
     historyList.style.display = 'block';
-    emptyState.style.display = 'none';
+    emptyStateHistory.style.display = 'none';
     
     historyList.innerHTML = filteredHistory.map((item, index) => {
         const preview = item.length > 100 ? item.substring(0, 100) + '...' : item;

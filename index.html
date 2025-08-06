@@ -27,20 +27,33 @@
             <input type="text" class="search-input" placeholder="Search clipboard history..." />
         </div>
 
-        <!-- Empty State -->
-        <div class="empty-state" id="emptyState">
-            <div class="empty-icon">📋</div>
-            <div class="empty-text">No clipboard history yet</div>
-            <div class="empty-subtext">Copy some text to get started!</div>
-        </div>
-
-        <!-- Clipboard History List -->
-        <div class="history-container">
-            <div class="pinned-list" id="pinnedList">
-                <!-- Pinned items will be populated by JavaScript -->
+        <!-- Tab Navigation -->
+        <div class="tab-container">
+            <div class="tab-nav">
+                <button class="tab-btn active" data-tab="history">History</button>
+                <button class="tab-btn" data-tab="pinned">Pinned</button>
             </div>
-            <div class="history-list" id="historyList">
-                <!-- Items will be populated by JavaScript -->
+            <div class="tab-content">
+                <div class="tab-pane active" id="historyTab">
+                    <div class="history-list" id="historyList">
+                        <!-- Items will be populated by JavaScript -->
+                    </div>
+                    <div class="empty-state" id="emptyStateHistory" style="display: none;">
+                        <div class="empty-icon">📋</div>
+                        <div class="empty-text">No clipboard history yet</div>
+                        <div class="empty-subtext">Copy some text to get started!</div>
+                    </div>
+                </div>
+                <div class="tab-pane" id="pinnedTab">
+                    <div class="pinned-list" id="pinnedList">
+                        <!-- Pinned items will be populated by JavaScript -->
+                    </div>
+                    <div class="empty-state" id="emptyStatePinned" style="display: none;">
+                        <div class="empty-icon">📌</div>
+                        <div class="empty-text">No pinned items yet</div>
+                        <div class="empty-subtext">Pin items from your history to see them here.</div>
+                    </div>
+                </div>
             </div>
         </div>
 
