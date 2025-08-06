@@ -240,6 +240,12 @@ function registerGlobalShortcuts() {
       quickPaste(i);
     });
   }
+  // Cmd+Shift+1 through Cmd+Shift+9 for pinned items
+  for (let i = 1; i <= 9; i++) {
+    globalShortcut.register(`CommandOrControl+Shift+${i}`, () => {
+      quickPastePinned(i);
+    });
+  }
 }
 
 // Show paste menu
@@ -273,6 +279,28 @@ async function quickPaste(index) {
       console.error('Error simulating paste:', error);
     }
     
+    // Restore original clipboard after a delay
+    setTimeout(() => {
+      clipboard.writeText(originalClipboard);
+    }, 500);
+  }
+}
+
+// Paste pinned item by index
+async function quickPastePinned(index) {
+  if (pinnedHistory.length >= index) {
+    const content = pinnedHistory[index - 1]?.content || pinnedHistory[index - 1];
+    // Store current clipboard content
+    const originalClipboard = clipboard.readText();
+    // Set new content to clipboard
+    clipboard.writeText(content);
+    // Simulate paste
+    try {
+      await keyboard.pressKey(Key.LeftSuper, Key.V);
+      await keyboard.releaseKey(Key.LeftSuper, Key.V);
+    } catch (error) {
+      console.error('Error simulating paste:', error);
+    }
     // Restore original clipboard after a delay
     setTimeout(() => {
       clipboard.writeText(originalClipboard);
