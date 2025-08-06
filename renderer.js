@@ -2,6 +2,7 @@ const { ipcRenderer } = require('electron');
 
 // DOM elements
 const historyList = document.getElementById('historyList');
+const pinnedList = document.getElementById('pinnedList');
 const emptyState = document.getElementById('emptyState');
 const searchInput = document.querySelector('.search-input');
 const btnClear = document.querySelector('.btn-clear');
@@ -10,8 +11,19 @@ const pasteMenuOverlay = document.getElementById('pasteMenuOverlay');
 const pasteMenuList = document.getElementById('pasteMenuList');
 const pasteMenuClose = document.getElementById('pasteMenuClose');
 
+// Pin Modal elements
+const pinModalOverlay = document.getElementById('pinModalOverlay');
+const pinModalClose = document.getElementById('pinModalClose');
+const pinModalCancel = document.getElementById('pinModalCancel');
+const pinForm = document.getElementById('pinForm');
+const pinItemIndex = document.getElementById('pinItemIndex');
+const pinTitle = document.getElementById('pinTitle');
+const pinDescription = document.getElementById('pinDescription');
+
+
 // State
 let clipboardHistory = [];
+let pinnedHistory = [];
 let filteredHistory = [];
 let selectedIndex = -1;
 
@@ -21,8 +33,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     await applyTheme();
 
     // Load initial clipboard history
-    clipboardHistory = await ipcRenderer.invoke('get-clipboard-history');
-    filteredHistory = [...clipboardHistory];
+    const { clipboardHistory: initialClipboardHistory, pinnedHistory: initialPinnedHistory } = await ipcRenderer.invoke('get-clipboard-history');
+    clipboardHistory = initialClipboardHistory;
+    pinnedHistory = initialPinnedHistory;
+    
+    filterHistory();
+    renderPinnedHistory();
     renderHistory();
     
     // Set up event listeners
@@ -56,7 +72,7 @@ function setupEventListeners() {
     // Clear history button
     btnClear.addEventListener('click', async () => {
         clipboardHistory = await ipcRenderer.invoke('clear-history');
-        filteredHistory = [...clipboardHistory];
+        filterHistory();
         renderHistory();
     });
     
@@ -79,6 +95,11 @@ function setupEventListeners() {
             hidePasteMenu();
         }
     });
+
+    // Pin Modal Listeners
+    pinModalClose.addEventListener('click', closePinModal);
+    pinModalCancel.addEventListener('click', closePinModal);
+    pinForm.addEventListener('submit', handlePinFormSubmit);
 }
 
 // Handle keyboard navigation
@@ -191,11 +212,12 @@ function navigatePasteMenu(direction) {
 // Filter history based on search input
 function filterHistory() {
     const searchTerm = searchInput.value.toLowerCase();
+    const pinnedContents = pinnedHistory.map(p => p.content);
     if (searchTerm === '') {
-        filteredHistory = [...clipboardHistory];
+        filteredHistory = clipboardHistory.filter(item => !pinnedContents.includes(item));
     } else {
         filteredHistory = clipboardHistory.filter(item => 
-            item.toLowerCase().includes(searchTerm)
+            !pinnedContents.includes(item) && item.toLowerCase().includes(searchTerm)
         );
     }
 }
@@ -208,9 +230,58 @@ async function applyTheme () {
     }
 }
 
+// Render Pinned History
+function renderPinnedHistory() {
+    if (pinnedHistory.length === 0) {
+        pinnedList.style.display = 'none';
+        return;
+    }
+
+    pinnedList.style.display = 'block';
+    pinnedList.innerHTML = pinnedHistory.map((item, index) => {
+        return `
+            <div class="pinned-item" data-index="${index}">
+                <div class="pinned-item-content">
+                    <div class="pinned-item-title">${escapeHtml(item.title) || 'Pinned Item'}</div>
+                    <div class="pinned-item-description">${escapeHtml(item.description) || escapeHtml(item.content)}</div>
+                </div>
+                <div class="pinned-item-actions">
+                    <button class="btn-unpin" title="Unpin">📌</button>
+                    <button class="btn-edit-pin" title="Edit">✏️</button>
+                    <button class="btn-copy" title="Copy">📋</button>
+                </div>
+            </div>
+        `;
+    }).join('');
+
+    // Add event listeners
+    pinnedList.querySelectorAll('.pinned-item').forEach((item, index) => {
+        item.addEventListener('click', () => copyContent(pinnedHistory[index].content));
+
+        const btnUnpin = item.querySelector('.btn-unpin');
+        btnUnpin.addEventListener('click', (e) => {
+            e.stopPropagation();
+            unpinItem(index);
+        });
+
+        const btnEdit = item.querySelector('.btn-edit-pin');
+        btnEdit.addEventListener('click', (e) => {
+            e.stopPropagation();
+            openPinModal(index, pinnedHistory[index]);
+        });
+
+        const btnCopy = item.querySelector('.btn-copy');
+        btnCopy.addEventListener('click', (e) => {
+            e.stopPropagation();
+            copyContent(pinnedHistory[index].content);
+        });
+    });
+}
+
+
 // Render history list
 function renderHistory() {
-    if (filteredHistory.length === 0) {
+    if (filteredHistory.length === 0 && pinnedHistory.length === 0) {
         historyList.style.display = 'none';
         emptyState.style.display = 'flex';
         return;
@@ -228,6 +299,7 @@ function renderHistory() {
                     <div class="history-item-preview">${escapeHtml(preview)}</div>
                 </div>
                 <div class="history-item-actions">
+                    <button class="btn-pin" title="Pin">📌</button>
                     <button class="btn-copy" title="Copy">📋</button>
                     <button class="btn-remove" title="Remove">❌</button>
                 </div>
@@ -243,9 +315,15 @@ function renderHistory() {
         });
         
         // Add action button listeners
+        const btnPin = item.querySelector('.btn-pin');
         const btnCopy = item.querySelector('.btn-copy');
         const btnRemove = item.querySelector('.btn-remove');
         
+        btnPin.addEventListener('click', (e) => {
+            e.stopPropagation();
+            openPinModal(index);
+        });
+
         btnCopy.addEventListener('click', (e) => {
             e.stopPropagation();
             copyItem(index);
@@ -267,13 +345,15 @@ function renderHistory() {
 async function copyItem(index) {
     if (index >= 0 && index < filteredHistory.length) {
         const textToCopy = filteredHistory[index];
-        await navigator.clipboard.writeText(textToCopy);
-        await ipcRenderer.invoke('show-notification', 'Copied to clipboard!');
-        window.close();
+        await copyContent(textToCopy);
     }
 }
 
-
+async function copyContent(content) {
+    await navigator.clipboard.writeText(content);
+    await ipcRenderer.invoke('show-notification', 'Copied to clipboard!');
+    window.close();
+}
 
 
 // Show paste menu
@@ -310,8 +390,60 @@ function hidePasteMenu() {
     ipcRenderer.invoke('hide-paste-menu');
 }
 
+// Pin Modal Functions
+function openPinModal(index, item = null) {
+    pinForm.reset();
+    if (item) { // Editing a pinned item
+        pinItemIndex.value = index;
+        pinTitle.value = item.title || '';
+        pinDescription.value = item.description || '';
+    } else { // Pinning a new item
+        pinItemIndex.value = index;
+    }
+    pinModalOverlay.classList.add('visible');
+}
+
+function closePinModal() {
+    pinModalOverlay.classList.remove('visible');
+}
+
+async function handlePinFormSubmit(e) {
+    e.preventDefault();
+    const index = pinItemIndex.value;
+    const title = pinTitle.value;
+    const description = pinDescription.value;
+
+    // Check if we are editing or adding a new pin
+    const existingPin = pinnedHistory[index];
+
+    if (existingPin && pinTitle.value) { // Editing existing pin
+        const updatedItem = { ...existingPin, title, description };
+        pinnedHistory = await ipcRenderer.invoke('update-pinned-item', index, updatedItem);
+    } else { // Adding new pin
+        const content = filteredHistory[index];
+        const newItem = { content, title, description, pinned: true };
+        pinnedHistory = await ipcRenderer.invoke('pin-item', newItem);
+    }
+
+    filterHistory();
+    renderPinnedHistory();
+    renderHistory();
+    closePinModal();
+}
+
+async function unpinItem(index) {
+    pinnedHistory = await ipcRenderer.invoke('unpin-item', index);
+    filterHistory();
+    renderPinnedHistory();
+    renderHistory();
+}
+
+
 // Utility function to escape HTML
 function escapeHtml(text) {
+    if (text === null || text === undefined) {
+        return '';
+    }
     const div = document.createElement('div');
     div.textContent = text;
     return div.innerHTML;
@@ -321,4 +453,4 @@ function escapeHtml(text) {
 function truncateText(text, maxLength) {
     if (text.length <= maxLength) return text;
     return text.substring(0, maxLength) + '...';
-} 
+}

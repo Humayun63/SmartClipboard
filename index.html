@@ -36,10 +36,40 @@
 
         <!-- Clipboard History List -->
         <div class="history-container">
+            <div class="pinned-list" id="pinnedList">
+                <!-- Pinned items will be populated by JavaScript -->
+            </div>
             <div class="history-list" id="historyList">
                 <!-- Items will be populated by JavaScript -->
             </div>
         </div>
+
+    <!-- Pin Modal -->
+    <div class="modal-overlay" id="pinModalOverlay">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 class="modal-title">Pin Item</h3>
+                <button class="modal-close" id="pinModalClose">✕</button>
+            </div>
+            <div class="modal-content">
+                <form id="pinForm">
+                    <input type="hidden" id="pinItemIndex" value="">
+                    <div class="form-group">
+                        <label for="pinTitle">Title (Optional)</label>
+                        <input type="text" id="pinTitle" class="form-control" placeholder="Enter a title...">
+                    </div>
+                    <div class="form-group">
+                        <label for="pinDescription">Description (Optional)</label>
+                        <textarea id="pinDescription" class="form-control" rows="3" placeholder="Enter a description..."></textarea>
+                    </div>
+                    <div class="form-actions">
+                        <button type="button" class="btn btn-cancel" id="pinModalCancel">Cancel</button>
+                        <button type="submit" class="btn btn-submit">Save</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
 
         <!-- Quick Actions -->
         <div class="quick-actions">

@@ -7,6 +7,7 @@ const store = new Store({
   name: 'clipboard-history',
   defaults: {
     clipboardHistory: [],
+    pinnedHistory: [],
     maxHistorySize: 50,
     settings: {
       showTrayIcon: true,
@@ -20,6 +21,7 @@ let settingsWindow;
 let tray;
 let isPasteMenuVisible = false;
 let clipboardHistory = store.get('clipboardHistory', []);
+let pinnedHistory = store.get('pinnedHistory', []);
 let lastClipboardContent = '';
 let settings = store.get('settings', {});
 
@@ -288,7 +290,7 @@ async function quickPaste(index) {
 
 // IPC handlers
 ipcMain.handle('get-clipboard-history', () => {
-  return clipboardHistory;
+  return { clipboardHistory, pinnedHistory };
 });
 
 ipcMain.handle('get-clipboard-settings', () => {
@@ -305,6 +307,24 @@ ipcMain.handle('remove-item', (event, index) => {
   clipboardHistory.splice(index, 1);
   store.set('clipboardHistory', clipboardHistory);
   return clipboardHistory;
+});
+
+ipcMain.handle('pin-item', (event, item) => {
+  pinnedHistory.unshift(item);
+  store.set('pinnedHistory', pinnedHistory);
+  return pinnedHistory;
+});
+
+ipcMain.handle('unpin-item', (event, index) => {
+  pinnedHistory.splice(index, 1);
+  store.set('pinnedHistory', pinnedHistory);
+  return pinnedHistory;
+});
+
+ipcMain.handle('update-pinned-item', (event, index, item) => {
+  pinnedHistory[index] = item;
+  store.set('pinnedHistory', pinnedHistory);
+  return pinnedHistory;
 });
 
 ipcMain.handle('paste-item', async (event, index) => {
