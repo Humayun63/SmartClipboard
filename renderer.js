@@ -389,6 +389,10 @@ function showPasteMenu(history) {
                     <div class="paste-menu-item-text">${escapeHtml(item)}</div>
                     <div class="paste-menu-item-preview">${escapeHtml(preview)}</div>
                 </div>
+                <div class="paste-menu-item-actions">
+                    <button class="btn-copy" title="Copy">📋</button>
+                    <button class="btn-pin" title="Pin">📌</button>
+                </div>
             </div>
         `;
     }).join('');
@@ -398,6 +402,18 @@ function showPasteMenu(history) {
     items.forEach((item, index) => {
         item.addEventListener('click', () => {
             pasteItemFromMenu(index);
+        });
+
+        const btnCopy = item.querySelector('.btn-copy');
+        btnCopy.addEventListener('click', (e) => {
+            e.stopPropagation();
+            copyContent(history[index]);
+        });
+
+        const btnPin = item.querySelector('.btn-pin');
+        btnPin.addEventListener('click', (e) => {
+            e.stopPropagation();
+            openPinModal(index);
         });
     });
     

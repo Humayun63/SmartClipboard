@@ -250,14 +250,6 @@ function showPasteMenu() {
   mainWindow.show();
   mainWindow.focus();
   mainWindow.webContents.send('show-paste-menu', clipboardHistory);
-  
-  // Auto-hide after timeout
-  setTimeout(() => {
-    if (isPasteMenuVisible) {
-      isPasteMenuVisible = false;
-      mainWindow.hide();
-    }
-  }, store.get('settings.pasteMenuTimeout', 3000));
 }
 
 const { keyboard, Key } = require('@nut-tree-fork/nut-js');
