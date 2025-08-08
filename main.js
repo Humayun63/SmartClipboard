@@ -223,28 +223,39 @@ function showClipboardNotification(content) {
 
 // Register global shortcuts
 function registerGlobalShortcuts() {
+  console.log('Registering global shortcuts...');
+  
   // Cmd+Shift+V for showing clipboard history
   globalShortcut.register('CommandOrControl+Shift+V', () => {
+    console.log('Cmd+Shift+V pressed - showing clipboard history');
     mainWindow.show();
     mainWindow.focus();
   });
   
   // Cmd+Option+V for paste menu (alternative to not interfere with normal Cmd+V)
   globalShortcut.register('CommandOrControl+Alt+V', () => {
+    console.log('Cmd+Alt+V pressed - showing paste menu');
     showPasteMenu();
   });
   
-  // Cmd+Alt+1 through Cmd+Alt+9 for quick paste
+  // Cmd+Alt+1 through Cmd+Alt+9 for quick paste from clipboard history
   for (let i = 1; i <= 9; i++) {
-    globalShortcut.register(`CommandOrControl+Alt+${i}`, () => {
+    const shortcut = `CommandOrControl+Alt+${i}`;
+    const success = globalShortcut.register(shortcut, () => {
+      console.log(`Shortcut ${shortcut} pressed - quick paste from clipboard history`);
       quickPaste(i);
     });
+    console.log(`Registered ${shortcut}: ${success}`);
   }
+  
   // Cmd+Shift+1 through Cmd+Shift+9 for pinned items
   for (let i = 1; i <= 9; i++) {
-    globalShortcut.register(`CommandOrControl+Shift+${i}`, () => {
+    const shortcut = `CommandOrControl+Shift+${i}`;
+    const success = globalShortcut.register(shortcut, () => {
+      console.log(`Shortcut ${shortcut} pressed - quick paste from pinned items`);
       quickPastePinned(i);
     });
+    console.log(`Registered ${shortcut}: ${success}`);
   }
 }
 
@@ -260,10 +271,12 @@ function showPasteMenu() {
 
 const { keyboard, Key } = require('@nut-tree-fork/nut-js');
 
-// Quick paste by index
+// Quick paste by index (from clipboard history)
 async function quickPaste(index) {
+  console.log(`Quick paste from clipboard history: index ${index}, history length: ${clipboardHistory.length}`);
   if (clipboardHistory.length >= index) {
     const content = clipboardHistory[index - 1];
+    console.log(`Pasting clipboard item: ${content.substring(0, 50)}...`);
     
     // Store current clipboard content
     const originalClipboard = clipboard.readText();
@@ -283,16 +296,24 @@ async function quickPaste(index) {
     setTimeout(() => {
       clipboard.writeText(originalClipboard);
     }, 500);
+  } else {
+    console.log(`No clipboard item at index ${index}`);
   }
 }
 
-// Paste pinned item by index
+// Paste pinned item by index (from pinned history only)
 async function quickPastePinned(index) {
+  console.log(`Quick paste from pinned items: index ${index}, pinned length: ${pinnedHistory.length}`);
   if (pinnedHistory.length >= index) {
     const pinnedItem = pinnedHistory[index - 1];
     const content = typeof pinnedItem === 'string' ? pinnedItem : pinnedItem.content;
     
-    if (!content) return;
+    if (!content) {
+      console.log(`No content found for pinned item at index ${index}`);
+      return;
+    }
+    
+    console.log(`Pasting pinned item: ${content.substring(0, 50)}...`);
     
     // Store current clipboard content
     const originalClipboard = clipboard.readText();
@@ -312,6 +333,8 @@ async function quickPastePinned(index) {
     setTimeout(() => {
       clipboard.writeText(originalClipboard);
     }, 500);
+  } else {
+    console.log(`No pinned item at index ${index}`);
   }
 }
 
