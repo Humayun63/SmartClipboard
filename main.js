@@ -289,11 +289,17 @@ async function quickPaste(index) {
 // Paste pinned item by index
 async function quickPastePinned(index) {
   if (pinnedHistory.length >= index) {
-    const content = pinnedHistory[index - 1]?.content || pinnedHistory[index - 1];
+    const pinnedItem = pinnedHistory[index - 1];
+    const content = typeof pinnedItem === 'string' ? pinnedItem : pinnedItem.content;
+    
+    if (!content) return;
+    
     // Store current clipboard content
     const originalClipboard = clipboard.readText();
+    
     // Set new content to clipboard
     clipboard.writeText(content);
+    
     // Simulate paste
     try {
       await keyboard.pressKey(Key.LeftSuper, Key.V);
@@ -301,6 +307,7 @@ async function quickPastePinned(index) {
     } catch (error) {
       console.error('Error simulating paste:', error);
     }
+    
     // Restore original clipboard after a delay
     setTimeout(() => {
       clipboard.writeText(originalClipboard);

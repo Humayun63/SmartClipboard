@@ -103,6 +103,13 @@ function setupEventListeners() {
     pinModalClose.addEventListener('click', closePinModal);
     pinModalCancel.addEventListener('click', closePinModal);
     pinForm.addEventListener('submit', handlePinFormSubmit);
+    
+    // Click outside modal to close
+    pinModalOverlay.addEventListener('click', (e) => {
+        if (e.target === pinModalOverlay) {
+            closePinModal();
+        }
+    });
 
     // Tab navigation
     tabButtons.forEach(button => {
@@ -261,11 +268,16 @@ function renderPinnedHistory() {
     pinnedList.style.display = 'block';
     emptyStatePinned.style.display = 'none';
     pinnedList.innerHTML = pinnedHistory.map((item, index) => {
+        // Handle both string and object formats
+        const content = typeof item === 'string' ? item : item.content;
+        const title = typeof item === 'string' ? 'Pinned Item' : (item.title || 'Pinned Item');
+        const description = typeof item === 'string' ? item : (item.description || item.content);
+        
         return `
             <div class="pinned-item" data-index="${index}">
                 <div class="pinned-item-content">
-                    <div class="pinned-item-title">${escapeHtml(item.title) || 'Pinned Item'}</div>
-                    <div class="pinned-item-description">${escapeHtml(item.description) || escapeHtml(item.content)}</div>
+                    <div class="pinned-item-title">${escapeHtml(title)}</div>
+                    <div class="pinned-item-description">${escapeHtml(description)}</div>
                 </div>
                 <div class="pinned-item-actions">
                     <button class="btn-unpin" title="Unpin">📌</button>
@@ -278,7 +290,10 @@ function renderPinnedHistory() {
 
     // Add event listeners
     pinnedList.querySelectorAll('.pinned-item').forEach((item, index) => {
-        item.addEventListener('click', () => copyContent(pinnedHistory[index].content));
+        const pinnedItem = pinnedHistory[index];
+        const content = typeof pinnedItem === 'string' ? pinnedItem : pinnedItem.content;
+        
+        item.addEventListener('click', () => copyContent(content));
 
         const btnUnpin = item.querySelector('.btn-unpin');
         btnUnpin.addEventListener('click', (e) => {
@@ -289,13 +304,13 @@ function renderPinnedHistory() {
         const btnEdit = item.querySelector('.btn-edit-pin');
         btnEdit.addEventListener('click', (e) => {
             e.stopPropagation();
-            openPinModal(index, pinnedHistory[index]);
+            openPinModal(index, pinnedItem);
         });
 
         const btnCopy = item.querySelector('.btn-copy');
         btnCopy.addEventListener('click', (e) => {
             e.stopPropagation();
-            copyContent(pinnedHistory[index].content);
+            copyContent(content);
         });
     });
 }
@@ -435,8 +450,15 @@ function openPinModal(index, item = null) {
         pinItemIndex.value = index;
         pinTitle.value = item.title || '';
         pinDescription.value = item.description || '';
-    } else { // Pinning a new item
+        // Add a flag to indicate we're editing
+        pinForm.dataset.editing = 'true';
+    } else { // Pinning a new item from history
         pinItemIndex.value = index;
+        // Pre-fill with the content as description
+        const content = filteredHistory[index];
+        pinDescription.value = content || '';
+        // Remove the editing flag
+        delete pinForm.dataset.editing;
     }
     pinModalOverlay.classList.add('visible');
 }
@@ -447,19 +469,27 @@ function closePinModal() {
 
 async function handlePinFormSubmit(e) {
     e.preventDefault();
-    const index = pinItemIndex.value;
-    const title = pinTitle.value;
-    const description = pinDescription.value;
+    const index = parseInt(pinItemIndex.value);
+    const title = pinTitle.value.trim();
+    const description = pinDescription.value.trim();
+    const isEditing = pinForm.dataset.editing === 'true';
 
-    // Check if we are editing or adding a new pin
-    const existingPin = pinnedHistory[index];
-
-    if (existingPin && pinTitle.value) { // Editing existing pin
-        const updatedItem = { ...existingPin, title, description };
+    if (isEditing) { // Editing existing pin
+        const updatedItem = { 
+            ...pinnedHistory[index], 
+            title: title || 'Pinned Item', 
+            description: description || pinnedHistory[index].content 
+        };
         pinnedHistory = await ipcRenderer.invoke('update-pinned-item', index, updatedItem);
     } else { // Adding new pin
         const content = filteredHistory[index];
-        const newItem = { content, title, description, pinned: true };
+        const newItem = { 
+            content, 
+            title: title || 'Pinned Item', 
+            description: description || content, 
+            pinned: true,
+            timestamp: Date.now()
+        };
         pinnedHistory = await ipcRenderer.invoke('pin-item', newItem);
     }
 
