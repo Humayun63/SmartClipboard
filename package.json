@@ -1,6 +1,6 @@
 {
   "name": "smart-clipboard",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "description": "A smart clipboard manager with history and quick paste features",
   "main": "main.js",
   "scripts": {
