@@ -32,6 +32,12 @@ let mergeTags = {};
 let filteredHistory = [];
 let selectedIndex = -1;
 
+// Cache state for performance optimization
+let lastRenderedHistoryLength = -1;
+let lastRenderedPinnedLength = -1;
+let lastSearchTerm = '';
+let currentActiveTab = 'history';
+
 // Initialize
 document.addEventListener('DOMContentLoaded', async () => {
     // Apply Saved Theme
@@ -44,8 +50,16 @@ document.addEventListener('DOMContentLoaded', async () => {
     mergeTags = initialMergeTags || {};
     
     filterHistory();
-    renderPinnedHistory();
-    renderHistory();
+    // Force initial render for both tabs to populate cache
+    lastRenderedHistoryLength = -1;
+    lastRenderedPinnedLength = -1;
+    
+    // Only render the active tab initially with force flag
+    if (currentActiveTab === 'history') {
+        renderHistory(true);
+    } else {
+        renderPinnedHistory(true);
+    }
     
     // Set up event listeners
     setupEventListeners();
@@ -54,7 +68,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     ipcRenderer.on('update-history', (event, history) => {
         clipboardHistory = history;
         filterHistory();
-        renderHistory();
+        
+        // Invalidate cache to ensure re-render when needed
+        lastRenderedHistoryLength = -1;
+        
+        // Always render if we're on the history tab
+        if (currentActiveTab === 'history') {
+            renderHistory(true);
+        }
     });
     
     ipcRenderer.on('show-paste-menu', (event, history) => {
@@ -72,14 +93,18 @@ function setupEventListeners() {
     // Search functionality
     searchInput.addEventListener('input', (e) => {
         filterHistory();
-        renderHistory();
+        if (currentActiveTab === 'history') {
+            renderHistory(true); // Force render for search
+        }
     });
     
     // Clear history button
     btnClear.addEventListener('click', async () => {
         clipboardHistory = await ipcRenderer.invoke('clear-history');
         filterHistory();
-        renderHistory();
+        if (currentActiveTab === 'history') {
+            renderHistory(true); // Force render after clear
+        }
     });
     
     // Settings button
@@ -130,11 +155,25 @@ function setupEventListeners() {
 }
 
 function switchTab(tab) {
+    // Update the current active tab
+    currentActiveTab = tab;
+    
+    // Immediately update the visual state for smooth UI
     tabButtons.forEach(button => {
         button.classList.toggle('active', button.dataset.tab === tab);
     });
     tabPanes.forEach(pane => {
         pane.classList.toggle('active', pane.id === `${tab}Tab`);
+    });
+    
+    // Use requestAnimationFrame to defer heavy rendering operations
+    requestAnimationFrame(() => {
+        // Force render the content for the active tab to ensure it's up to date
+        if (tab === 'history') {
+            renderHistory(true); // Force render
+        } else if (tab === 'pinned') {
+            renderPinnedHistory(true); // Force render
+        }
     });
 }
 
@@ -267,7 +306,22 @@ async function applyTheme () {
 }
 
 // Render Pinned History
-function renderPinnedHistory() {
+function renderPinnedHistory(forceRender = false) {
+    // Check if content has changed
+    const contentChanged = lastRenderedPinnedLength !== pinnedHistory.length;
+    
+    // Only render if we're on the pinned tab AND (content changed OR forced render)
+    if (!forceRender && currentActiveTab !== 'pinned') {
+        return; // Skip render if we're not on this tab and not forced
+    }
+    
+    // If content hasn't changed and we're not forcing, skip render
+    if (!forceRender && !contentChanged && lastRenderedPinnedLength !== -1) {
+        return;
+    }
+    
+    lastRenderedPinnedLength = pinnedHistory.length;
+    
     if (pinnedHistory.length === 0) {
         pinnedList.style.display = 'none';
         emptyStatePinned.style.display = 'flex';
@@ -276,7 +330,11 @@ function renderPinnedHistory() {
 
     pinnedList.style.display = 'block';
     emptyStatePinned.style.display = 'none';
-    pinnedList.innerHTML = pinnedHistory.map((item, index) => {
+    
+    // Use DocumentFragment for better performance
+    const fragment = document.createDocumentFragment();
+    
+    pinnedHistory.forEach((item, index) => {
         // Handle both string and object formats
         const content = typeof item === 'string' ? item : item.content;
         const title = typeof item === 'string' ? 'Pinned Item' : (item.title || 'Pinned Item');
@@ -286,52 +344,74 @@ function renderPinnedHistory() {
         const mergeTagDisplay = mergeTagSlug ? 
             `<div class="merge-tag-badge">🏷️ ${escapeHtml(mergeTagSlug)}</div>` : '';
         
-        return `
-            <div class="pinned-item" data-index="${index}">
-                <div class="pinned-item-content">
-                    <div class="pinned-item-title">${escapeHtml(title)}</div>
-                    ${mergeTagDisplay}
-                    <div class="pinned-item-description">${escapeHtml(description)}</div>
-                </div>
-                <div class="pinned-item-actions">
-                    <button class="btn-unpin" title="Unpin">📌</button>
-                    <button class="btn-edit-pin" title="Edit">✏️</button>
-                    <button class="btn-copy" title="Copy">📋</button>
-                </div>
+        const pinnedItem = document.createElement('div');
+        pinnedItem.className = 'pinned-item';
+        pinnedItem.dataset.index = index;
+        
+        pinnedItem.innerHTML = `
+            <div class="pinned-item-content">
+                <div class="pinned-item-title">${escapeHtml(title)}</div>
+                ${mergeTagDisplay}
+                <div class="pinned-item-description">${escapeHtml(description)}</div>
+            </div>
+            <div class="pinned-item-actions">
+                <button class="btn-unpin" title="Unpin">📌</button>
+                <button class="btn-edit-pin" title="Edit">✏️</button>
+                <button class="btn-copy" title="Copy">📋</button>
             </div>
         `;
-    }).join('');
-
-    // Add event listeners
-    pinnedList.querySelectorAll('.pinned-item').forEach((item, index) => {
-        const pinnedItem = pinnedHistory[index];
-        const content = typeof pinnedItem === 'string' ? pinnedItem : pinnedItem.content;
         
-        item.addEventListener('click', () => copyContent(content));
+        // Add event listeners
+        pinnedItem.addEventListener('click', () => copyContent(content));
 
-        const btnUnpin = item.querySelector('.btn-unpin');
+        const btnUnpin = pinnedItem.querySelector('.btn-unpin');
+        const btnEdit = pinnedItem.querySelector('.btn-edit-pin');
+        const btnCopy = pinnedItem.querySelector('.btn-copy');
+        
         btnUnpin.addEventListener('click', (e) => {
             e.stopPropagation();
             unpinItem(index);
         });
 
-        const btnEdit = item.querySelector('.btn-edit-pin');
         btnEdit.addEventListener('click', (e) => {
             e.stopPropagation();
-            openPinModal(index, pinnedItem);
+            openPinModal(index, item);
         });
 
-        const btnCopy = item.querySelector('.btn-copy');
         btnCopy.addEventListener('click', (e) => {
             e.stopPropagation();
             copyContent(content);
         });
+        
+        fragment.appendChild(pinnedItem);
     });
+    
+    // Replace content in one operation
+    pinnedList.innerHTML = '';
+    pinnedList.appendChild(fragment);
 }
 
 
 // Render history list
-function renderHistory() {
+function renderHistory(forceRender = false) {
+    // Check if content has changed
+    const currentSearchTerm = searchInput.value.toLowerCase();
+    const contentChanged = lastRenderedHistoryLength !== filteredHistory.length || 
+                          lastSearchTerm !== currentSearchTerm;
+    
+    // Only render if we're on the history tab AND (content changed OR forced render)
+    if (!forceRender && currentActiveTab !== 'history') {
+        return; // Skip render if we're not on this tab and not forced
+    }
+    
+    // If content hasn't changed and we're not forcing, skip render
+    if (!forceRender && !contentChanged && lastRenderedHistoryLength !== -1) {
+        return;
+    }
+    
+    lastRenderedHistoryLength = filteredHistory.length;
+    lastSearchTerm = currentSearchTerm;
+    
     if (filteredHistory.length === 0) {
         historyList.style.display = 'none';
         emptyStateHistory.style.display = 'flex';
@@ -341,58 +421,57 @@ function renderHistory() {
     historyList.style.display = 'block';
     emptyStateHistory.style.display = 'none';
     
-    historyList.innerHTML = filteredHistory.map((item, index) => {
+    // Use DocumentFragment for better performance
+    const fragment = document.createDocumentFragment();
+    
+    filteredHistory.forEach((item, index) => {
         const preview = item.length > 100 ? item.substring(0, 100) + '...' : item;
-        return `
-            <div class="history-item" data-index="${index}">
-                <div class="history-item-content">
-                    <div class="history-item-text">${escapeHtml(item)}</div>
-                    <div class="history-item-preview">${escapeHtml(preview)}</div>
-                </div>
-                <div class="history-item-actions">
-                    <button class="btn-pin" title="Pin">📌</button>
-                    <button class="btn-copy" title="Copy">📋</button>
-                    <button class="btn-remove" title="Remove">❌</button>
-                </div>
+        
+        const historyItem = document.createElement('div');
+        historyItem.className = 'history-item';
+        historyItem.dataset.index = index;
+        
+        historyItem.innerHTML = `
+            <div class="history-item-content">
+                <div class="history-item-text">${escapeHtml(item)}</div>
+                <div class="history-item-preview">${escapeHtml(preview)}</div>
+            </div>
+            <div class="history-item-actions">
+                <button class="btn-pin" title="Pin">📌</button>
+                <button class="btn-copy" title="Copy">📋</button>
+                <button class="btn-remove" title="Remove">❌</button>
             </div>
         `;
-    }).join('');
-    
-    // Add click listeners to items
-    const items = historyList.querySelectorAll('.history-item');
-    items.forEach((item, index) => {
-        item.addEventListener('click', () => {
-            copyItem(index);
-        });
         
-        // Add action button listeners
-        const btnPin = item.querySelector('.btn-pin');
-        const btnCopy = item.querySelector('.btn-copy');
-        const btnRemove = item.querySelector('.btn-remove');
+        // Add event listeners
+        historyItem.addEventListener('click', () => copyItem(index));
+        
+        const btnPin = historyItem.querySelector('.btn-pin');
+        const btnCopy = historyItem.querySelector('.btn-copy');
+        const btnRemove = historyItem.querySelector('.btn-remove');
         
         btnPin.addEventListener('click', (e) => {
             e.stopPropagation();
             openPinModal(index);
         });
-
+        
         btnCopy.addEventListener('click', (e) => {
             e.stopPropagation();
             copyItem(index);
         });
         
-        btnRemove.addEventListener('click', async (e) => {
+        btnRemove.addEventListener('click', (e) => {
             e.stopPropagation();
-            const originalIndex = clipboardHistory.indexOf(filteredHistory[index]);
-            if (originalIndex !== -1) {
-                clipboardHistory = await ipcRenderer.invoke('remove-item', originalIndex);
-                filterHistory();
-                renderHistory();
-            }
+            removeItem(index);
         });
+        
+        fragment.appendChild(historyItem);
     });
-}
-
-// Copy item from main window
+    
+    // Replace content in one operation
+    historyList.innerHTML = '';
+    historyList.appendChild(fragment);
+}// Copy item from main window
 async function copyItem(index) {
     if (index >= 0 && index < filteredHistory.length) {
         const textToCopy = filteredHistory[index];
@@ -513,8 +592,16 @@ async function handlePinFormSubmit(e) {
         }
 
         filterHistory();
-        renderPinnedHistory();
-        renderHistory();
+        // Update the cache flags to force re-render when needed
+        lastRenderedPinnedLength = -1;
+        lastRenderedHistoryLength = -1;
+        
+        // Only render the active tab, but ensure both will re-render when switched to
+        if (currentActiveTab === 'pinned') {
+            renderPinnedHistory(true);
+        } else {
+            renderHistory(true);
+        }
         closePinModal();
         
         // Show success notification
@@ -535,8 +622,17 @@ async function unpinItem(index) {
     pinnedHistory = result.pinnedHistory;
     mergeTags = result.mergeTags;
     filterHistory();
-    renderPinnedHistory();
-    renderHistory();
+    
+    // Update the cache flags to force re-render when needed
+    lastRenderedPinnedLength = -1;
+    lastRenderedHistoryLength = -1;
+    
+    // Only render the active tab, but ensure both will re-render when switched to
+    if (currentActiveTab === 'pinned') {
+        renderPinnedHistory(true);
+    } else {
+        renderHistory(true);
+    }
 }
 
 
