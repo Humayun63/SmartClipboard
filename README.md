@@ -9,7 +9,14 @@ A powerful, responsive clipboard manager desktop app built with Electron that en
 - Persistent storage with configurable history size
 - Real-time clipboard monitoring
 
-### 🎯 Smart Paste Menu
+### �️ Merge Tags (NEW!)
+- Create shortcuts for frequently used text snippets
+- Pin items with unique merge tag slugs (e.g., `app_name`, `my_email`)
+- Press **Ctrl+Option+M** to replace selected merge tag with saved content
+- Perfect for email signatures, addresses, company names, etc.
+- See [MERGE_TAG_USAGE.md](MERGE_TAG_USAGE.md) for detailed instructions
+
+### �🎯 Smart Paste Menu
 - Press **Cmd+Option+V** to show a dropdown with all recent clipboard entries
 - Click or use arrow keys to select an item
 - Automatically pastes the selected content
@@ -20,6 +27,12 @@ A powerful, responsive clipboard manager desktop app built with Electron that en
 - **Cmd+Alt+3** → Paste third most recent item
 - And so on up to **Cmd+Alt+9**
 - **Cmd+Shift+1-9** → Paste pinned item 1-9
+
+### 📌 Pin Important Items
+- Pin frequently used clipboard items for quick access
+- Add custom titles and descriptions
+- Create merge tags for text replacement shortcuts
+- Visual indicators for pinned items with merge tags
 
 ### 🎨 Theme Support
 - **Light Theme**: Clean, modern light interface
@@ -73,6 +86,14 @@ npm run dist
 2. **Show paste menu** - Press `Cmd+Option+V` to see all recent clipboard items
 3. **Quick paste** - Use `Cmd+Alt+1` through `Cmd+Alt+9` for instant pasting
 4. **Paste pinned item** - Use `Cmd+Shift+1` through `Cmd+Shift+9` to paste pinned items
+5. **Merge tag replacement** - Select merge tag text and press `Ctrl+Option+M` to replace with saved content
+
+### Keyboard Shortcuts
+- `⌘ + ⇧ + V` - Show Smart Clipboard main window
+- `⌘ + ⌥ + V` - Show paste menu overlay
+- `⌘ + ⌥ + 1-9` - Quick paste from clipboard history
+- `⌘ + ⇧ + 1-9` - Quick paste from pinned items
+- `⌃ + ⌥ + M` - Replace selected merge tag with saved content
 5. **Show history** - Press `Cmd+Shift+V` to open the full history window
 
 ### System Tray

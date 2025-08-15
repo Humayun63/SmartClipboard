@@ -69,7 +69,12 @@
                     <input type="hidden" id="pinItemIndex" value="">
                     <div class="form-group">
                         <label for="pinTitle">Title (Optional)</label>
-                        <input type="text" id="pinTitle" class="form-control" placeholder="Enter a title...">
+                        <input type="text" id="pinTitle" class="form-control" placeholder="Enter a human-readable title...">
+                    </div>
+                    <div class="form-group">
+                        <label for="pinMergeTag">Merge Tag Slug (Optional)</label>
+                        <input type="text" id="pinMergeTag" class="form-control" placeholder="e.g., app_name, company_email" pattern="[a-z0-9_]+" title="Only lowercase letters, numbers, and underscores allowed">
+                        <small class="form-help">Use lowercase letters, numbers, and underscores only. This will be used for text replacement via Ctrl+Option+M.</small>
                     </div>
                     <div class="form-group">
                         <label for="pinDescription">Description (Optional)</label>
@@ -92,6 +97,7 @@
                 <span class="shortcut">⌘ + ⌥ + 1-9</span> - Quick Paste
                 <span class="shortcut">⌘ + ⇧ + V</span> - Show History
                 <span class="shortcut">⌘ + ⇧ + 1-9</span> - Pinned Items
+                <span class="shortcut">⌃ + ⌥ + M</span> - Merge Tag Replace
             </div>
         </div>
     </div>

@@ -8,6 +8,7 @@ const store = new Store({
   defaults: {
     clipboardHistory: [],
     pinnedHistory: [],
+    mergeTags: {},
     maxHistorySize: 50,
     settings: {
       showTrayIcon: true,
@@ -22,6 +23,7 @@ let tray;
 let isPasteMenuVisible = false;
 let clipboardHistory = store.get('clipboardHistory', []);
 let pinnedHistory = store.get('pinnedHistory', []);
+let mergeTags = store.get('mergeTags', {});
 let lastClipboardContent = '';
 let settings = store.get('settings', {});
 
@@ -237,6 +239,12 @@ function registerGlobalShortcuts() {
     console.log('Cmd+Alt+V pressed - showing paste menu');
     showPasteMenu();
   });
+
+  // Ctrl+Option+M for merge tag replacement
+  globalShortcut.register('Control+Alt+M', () => {
+    console.log('Ctrl+Alt+M pressed - merge tag replacement');
+    handleMergeTagReplacement();
+  });
   
   // Cmd+Alt+1 through Cmd+Alt+9 for quick paste from clipboard history
   for (let i = 1; i <= 9; i++) {
@@ -338,9 +346,75 @@ async function quickPastePinned(index) {
   }
 }
 
+// Handle merge tag replacement
+async function handleMergeTagReplacement() {
+  try {
+    console.log('Starting merge tag replacement...');
+    
+    // Store original clipboard content
+    const originalClipboard = clipboard.readText();
+    
+    // Copy the selected text by simulating Cmd+C
+    await keyboard.pressKey(Key.LeftSuper, Key.C);
+    await keyboard.releaseKey(Key.LeftSuper, Key.C);
+    
+    // Small delay to ensure clipboard is updated
+    await new Promise(resolve => setTimeout(resolve, 100));
+    
+    // Get the selected text from clipboard
+    const selectedText = clipboard.readText();
+    
+    if (!selectedText || selectedText.trim() === '') {
+      console.log('No text selected for merge tag replacement');
+      // Restore original clipboard
+      clipboard.writeText(originalClipboard);
+      return;
+    }
+    
+    // Check if the selected text matches any merge tag slug
+    const mergeTagValue = mergeTags[selectedText.trim()];
+    
+    if (mergeTagValue) {
+      console.log(`Found merge tag: ${selectedText} -> ${mergeTagValue}`);
+      
+      // Replace selected text with merge tag value
+      clipboard.writeText(mergeTagValue);
+      
+      // Paste the replacement text
+      await keyboard.pressKey(Key.LeftSuper, Key.V);
+      await keyboard.releaseKey(Key.LeftSuper, Key.V);
+      
+      // Show notification
+      new Notification({
+        title: 'Smart Clipboard',
+        body: `Replaced "${selectedText}" with merge tag value`,
+        icon: path.join(__dirname, 'icon.png')
+      }).show();
+      
+      // Restore original clipboard after a delay
+      setTimeout(() => {
+        clipboard.writeText(originalClipboard);
+      }, 500);
+    } else {
+      console.log(`No merge tag found for: ${selectedText}`);
+      // Restore original clipboard
+      clipboard.writeText(originalClipboard);
+      
+      // Show notification that no merge tag was found
+      new Notification({
+        title: 'Smart Clipboard',
+        body: `No merge tag found for "${selectedText}"`,
+        icon: path.join(__dirname, 'icon.png')
+      }).show();
+    }
+  } catch (error) {
+    console.error('Error in merge tag replacement:', error);
+  }
+}
+
 // IPC handlers
 ipcMain.handle('get-clipboard-history', () => {
-  return { clipboardHistory, pinnedHistory };
+  return { clipboardHistory, pinnedHistory, mergeTags };
 });
 
 ipcMain.handle('get-clipboard-settings', () => {
@@ -365,17 +439,94 @@ ipcMain.handle('pin-item', (event, item) => {
   return pinnedHistory;
 });
 
-ipcMain.handle('unpin-item', (event, index) => {
-  pinnedHistory.splice(index, 1);
+ipcMain.handle('pin-item-with-merge-tag', (event, { item, title, mergeTagSlug }) => {
+  // Validate merge tag slug
+  if (mergeTagSlug && !isValidMergeTagSlug(mergeTagSlug)) {
+    throw new Error('Invalid merge tag slug. Use only lowercase letters, numbers, and underscores.');
+  }
+  
+  // Check if merge tag slug already exists
+  if (mergeTagSlug && mergeTags[mergeTagSlug]) {
+    throw new Error('Merge tag slug already exists. Please choose a different one.');
+  }
+  
+  // Create pinned item with merge tag info
+  const pinnedItem = {
+    content: typeof item === 'string' ? item : item.content,
+    title: title || '',
+    mergeTagSlug: mergeTagSlug || null,
+    timestamp: Date.now()
+  };
+  
+  pinnedHistory.unshift(pinnedItem);
   store.set('pinnedHistory', pinnedHistory);
-  return pinnedHistory;
+  
+  // Store merge tag if provided
+  if (mergeTagSlug) {
+    mergeTags[mergeTagSlug] = pinnedItem.content;
+    store.set('mergeTags', mergeTags);
+  }
+  
+  return { pinnedHistory, mergeTags };
 });
 
-ipcMain.handle('update-pinned-item', (event, index, item) => {
-  pinnedHistory[index] = item;
+ipcMain.handle('unpin-item', (event, index) => {
+  const item = pinnedHistory[index];
+  
+  // Remove merge tag if it exists
+  if (item && item.mergeTagSlug && mergeTags[item.mergeTagSlug]) {
+    delete mergeTags[item.mergeTagSlug];
+    store.set('mergeTags', mergeTags);
+  }
+  
+  pinnedHistory.splice(index, 1);
   store.set('pinnedHistory', pinnedHistory);
-  return pinnedHistory;
+  return { pinnedHistory, mergeTags };
 });
+
+ipcMain.handle('update-pinned-item', (event, index, updatedItem) => {
+  const oldItem = pinnedHistory[index];
+  
+  // Validate merge tag slug if provided
+  if (updatedItem.mergeTagSlug && !isValidMergeTagSlug(updatedItem.mergeTagSlug)) {
+    throw new Error('Invalid merge tag slug. Use only lowercase letters, numbers, and underscores.');
+  }
+  
+  // Check if merge tag slug already exists (unless it's the same item)
+  if (updatedItem.mergeTagSlug && 
+      mergeTags[updatedItem.mergeTagSlug] && 
+      oldItem.mergeTagSlug !== updatedItem.mergeTagSlug) {
+    throw new Error('Merge tag slug already exists. Please choose a different one.');
+  }
+  
+  // Remove old merge tag if it exists and is different
+  if (oldItem.mergeTagSlug && oldItem.mergeTagSlug !== updatedItem.mergeTagSlug) {
+    delete mergeTags[oldItem.mergeTagSlug];
+  }
+  
+  // Update the pinned item
+  pinnedHistory[index] = updatedItem;
+  store.set('pinnedHistory', pinnedHistory);
+  
+  // Update merge tag if provided
+  if (updatedItem.mergeTagSlug) {
+    mergeTags[updatedItem.mergeTagSlug] = updatedItem.content;
+    store.set('mergeTags', mergeTags);
+  }
+  
+  return { pinnedHistory, mergeTags };
+});
+
+ipcMain.handle('get-merge-tags', () => {
+  return mergeTags;
+});
+
+// Helper function to validate merge tag slug
+function isValidMergeTagSlug(slug) {
+  if (!slug || typeof slug !== 'string') return false;
+  // Allow lowercase letters, numbers, and underscores only
+  return /^[a-z0-9_]+$/.test(slug);
+}
 
 ipcMain.handle('paste-item', async (event, index) => {
   if (clipboardHistory[index]) {

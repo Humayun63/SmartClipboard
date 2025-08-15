@@ -21,12 +21,14 @@ const pinModalCancel = document.getElementById('pinModalCancel');
 const pinForm = document.getElementById('pinForm');
 const pinItemIndex = document.getElementById('pinItemIndex');
 const pinTitle = document.getElementById('pinTitle');
+const pinMergeTag = document.getElementById('pinMergeTag');
 const pinDescription = document.getElementById('pinDescription');
 
 
 // State
 let clipboardHistory = [];
 let pinnedHistory = [];
+let mergeTags = {};
 let filteredHistory = [];
 let selectedIndex = -1;
 
@@ -36,9 +38,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     await applyTheme();
 
     // Load initial clipboard history
-    const { clipboardHistory: initialClipboardHistory, pinnedHistory: initialPinnedHistory } = await ipcRenderer.invoke('get-clipboard-history');
+    const { clipboardHistory: initialClipboardHistory, pinnedHistory: initialPinnedHistory, mergeTags: initialMergeTags } = await ipcRenderer.invoke('get-clipboard-history');
     clipboardHistory = initialClipboardHistory;
     pinnedHistory = initialPinnedHistory;
+    mergeTags = initialMergeTags || {};
     
     filterHistory();
     renderPinnedHistory();
@@ -99,19 +102,25 @@ function setupEventListeners() {
         }
     });
 
-    // Pin Modal Listeners
+    // Pin modal event handlers
     pinModalClose.addEventListener('click', closePinModal);
     pinModalCancel.addEventListener('click', closePinModal);
     pinForm.addEventListener('submit', handlePinFormSubmit);
     
-    // Click outside modal to close
+    // Merge tag input validation
+    pinMergeTag.addEventListener('input', (e) => {
+        let value = e.target.value;
+        // Convert to lowercase and remove invalid characters
+        value = value.toLowerCase().replace(/[^a-z0-9_]/g, '');
+        e.target.value = value;
+    });
+
+    // Click outside pin modal to close
     pinModalOverlay.addEventListener('click', (e) => {
         if (e.target === pinModalOverlay) {
             closePinModal();
         }
-    });
-
-    // Tab navigation
+    });    // Tab navigation
     tabButtons.forEach(button => {
         button.addEventListener('click', () => {
             const tab = button.dataset.tab;
@@ -272,11 +281,16 @@ function renderPinnedHistory() {
         const content = typeof item === 'string' ? item : item.content;
         const title = typeof item === 'string' ? 'Pinned Item' : (item.title || 'Pinned Item');
         const description = typeof item === 'string' ? item : (item.description || item.content);
+        const mergeTagSlug = typeof item === 'string' ? null : item.mergeTagSlug;
+        
+        const mergeTagDisplay = mergeTagSlug ? 
+            `<div class="merge-tag-badge">🏷️ ${escapeHtml(mergeTagSlug)}</div>` : '';
         
         return `
             <div class="pinned-item" data-index="${index}">
                 <div class="pinned-item-content">
                     <div class="pinned-item-title">${escapeHtml(title)}</div>
+                    ${mergeTagDisplay}
                     <div class="pinned-item-description">${escapeHtml(description)}</div>
                 </div>
                 <div class="pinned-item-actions">
@@ -449,6 +463,7 @@ function openPinModal(index, item = null) {
     if (item) { // Editing a pinned item
         pinItemIndex.value = index;
         pinTitle.value = item.title || '';
+        pinMergeTag.value = item.mergeTagSlug || '';
         pinDescription.value = item.description || '';
         // Add a flag to indicate we're editing
         pinForm.dataset.editing = 'true';
@@ -471,36 +486,54 @@ async function handlePinFormSubmit(e) {
     e.preventDefault();
     const index = parseInt(pinItemIndex.value);
     const title = pinTitle.value.trim();
+    const mergeTagSlug = pinMergeTag.value.trim().toLowerCase();
     const description = pinDescription.value.trim();
     const isEditing = pinForm.dataset.editing === 'true';
 
-    if (isEditing) { // Editing existing pin
-        const updatedItem = { 
-            ...pinnedHistory[index], 
-            title: title || 'Pinned Item', 
-            description: description || pinnedHistory[index].content 
-        };
-        pinnedHistory = await ipcRenderer.invoke('update-pinned-item', index, updatedItem);
-    } else { // Adding new pin
-        const content = filteredHistory[index];
-        const newItem = { 
-            content, 
-            title: title || 'Pinned Item', 
-            description: description || content, 
-            pinned: true,
-            timestamp: Date.now()
-        };
-        pinnedHistory = await ipcRenderer.invoke('pin-item', newItem);
-    }
+    try {
+        if (isEditing) { // Editing existing pin
+            const updatedItem = { 
+                ...pinnedHistory[index], 
+                title: title || 'Pinned Item', 
+                mergeTagSlug: mergeTagSlug || null,
+                description: description || pinnedHistory[index].content 
+            };
+            const result = await ipcRenderer.invoke('update-pinned-item', index, updatedItem);
+            pinnedHistory = result.pinnedHistory;
+            mergeTags = result.mergeTags;
+        } else { // Adding new pin
+            const content = filteredHistory[index];
+            const result = await ipcRenderer.invoke('pin-item-with-merge-tag', {
+                item: content,
+                title: title || 'Pinned Item',
+                mergeTagSlug: mergeTagSlug || null
+            });
+            pinnedHistory = result.pinnedHistory;
+            mergeTags = result.mergeTags;
+        }
 
-    filterHistory();
-    renderPinnedHistory();
-    renderHistory();
-    closePinModal();
+        filterHistory();
+        renderPinnedHistory();
+        renderHistory();
+        closePinModal();
+        
+        // Show success notification
+        await ipcRenderer.invoke('show-notification', 
+            mergeTagSlug ? 
+                `Item pinned with merge tag "${mergeTagSlug}"` : 
+                'Item pinned successfully'
+        );
+        
+    } catch (error) {
+        console.error('Error saving pinned item:', error);
+        await ipcRenderer.invoke('show-notification', `Error: ${error.message}`);
+    }
 }
 
 async function unpinItem(index) {
-    pinnedHistory = await ipcRenderer.invoke('unpin-item', index);
+    const result = await ipcRenderer.invoke('unpin-item', index);
+    pinnedHistory = result.pinnedHistory;
+    mergeTags = result.mergeTags;
     filterHistory();
     renderPinnedHistory();
     renderHistory();
