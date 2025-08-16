@@ -717,15 +717,18 @@ body {
     left: 0;
     right: 0;
     bottom: 0;
-    background: rgba(0, 0, 0, 0.5);
-    display: none;
+    background: rgba(0, 0, 0, 0);
+    display: flex;
     align-items: center;
     justify-content: center;
     z-index: 1000;
+    visibility: hidden;
+    transition: background-color 0.3s ease-in-out, visibility 0.3s ease-in-out;
 }
 
 .modal-overlay.visible {
-    display: flex;
+    background: rgba(0, 0, 0, 0.5);
+    visibility: visible;
 }
 
 .modal {
@@ -734,6 +737,18 @@ body {
     box-shadow: var(--shadow);
     width: 400px;
     max-width: 90vw;
+    max-height: 95vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    opacity: 0;
+    transform: scale(0.95) translateY(-20px);
+    transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out;
+}
+
+.modal-overlay.visible .modal {
+    opacity: 1;
+    transform: scale(1) translateY(0);
 }
 
 .modal-header {
@@ -742,6 +757,7 @@ body {
     align-items: center;
     padding: 16px 20px;
     border-bottom: 1px solid var(--border-color);
+    flex-shrink: 0;
 }
 
 .modal-title {
@@ -758,7 +774,28 @@ body {
 }
 
 .modal-content {
-    padding: 20px;
+    padding: 20px 20px 0;
+    overflow-y: auto;
+    flex: 1;
+    scroll-behavior: smooth;
+}
+
+/* Custom scrollbar for modal content */
+.modal-content::-webkit-scrollbar {
+    width: 6px;
+}
+
+.modal-content::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.modal-content::-webkit-scrollbar-thumb {
+    background: var(--border-color);
+    border-radius: 3px;
+}
+
+.modal-content::-webkit-scrollbar-thumb:hover {
+    background: var(--text-secondary);
 }
 
 .form-group {
@@ -798,7 +835,8 @@ body {
 }
 
 #pinContent {
-    min-height: 100px;
+    min-height: 80px;
+    max-height: 150px;
     resize: vertical;
     font-family: ui-monospace, 'SFMono-Regular', 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', monospace;
     line-height: 1.5;
@@ -809,7 +847,8 @@ body {
 }
 
 #pinDescription {
-    min-height: 80px;
+    min-height: 60px;
+    max-height: 100px;
     resize: vertical;
 }
 
@@ -818,6 +857,12 @@ body {
     justify-content: flex-end;
     gap: 8px;
     margin-top: 20px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border-color);
+    background: var(--bg-primary);
+    position: sticky;
+    bottom: 0;
+    padding-bottom: 20px;
 }
 
 .btn {
