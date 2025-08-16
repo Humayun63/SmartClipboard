@@ -18,9 +18,11 @@ const tabPanes = document.querySelectorAll('.tab-pane');
 const pinModalOverlay = document.getElementById('pinModalOverlay');
 const pinModalClose = document.getElementById('pinModalClose');
 const pinModalCancel = document.getElementById('pinModalCancel');
+const pinModalTitle = document.getElementById('pinModalTitle');
 const pinForm = document.getElementById('pinForm');
 const pinItemIndex = document.getElementById('pinItemIndex');
 const pinTitle = document.getElementById('pinTitle');
+const pinContent = document.getElementById('pinContent');
 const pinMergeTag = document.getElementById('pinMergeTag');
 const pinDescription = document.getElementById('pinDescription');
 
@@ -569,21 +571,35 @@ function hidePasteMenu() {
 function openPinModal(index, item = null) {
     pinForm.reset();
     if (item) { // Editing a pinned item
+        pinModalTitle.textContent = 'Edit Pinned Item';
         pinItemIndex.value = index;
         pinTitle.value = item.title || '';
+        pinContent.value = item.content || '';
         pinMergeTag.value = item.mergeTagSlug || '';
         pinDescription.value = item.description || '';
         // Add a flag to indicate we're editing
         pinForm.dataset.editing = 'true';
     } else { // Pinning a new item from history
+        pinModalTitle.textContent = 'Pin Item';
         pinItemIndex.value = index;
-        // Pre-fill with the content as description
+        // Pre-fill with the content
         const content = filteredHistory[index];
-        pinDescription.value = content || '';
+        pinContent.value = content || '';
+        // Keep description empty by default
+        pinDescription.value = '';
         // Remove the editing flag
         delete pinForm.dataset.editing;
     }
     pinModalOverlay.classList.add('visible');
+    
+    // Focus on the content field after a short delay to ensure modal is visible
+    setTimeout(() => {
+        if (item) {
+            pinContent.focus();
+        } else {
+            pinTitle.focus();
+        }
+    }, 100);
 }
 
 function closePinModal() {
@@ -594,27 +610,35 @@ async function handlePinFormSubmit(e) {
     e.preventDefault();
     const index = parseInt(pinItemIndex.value);
     const title = pinTitle.value.trim();
+    const content = pinContent.value.trim();
     const mergeTagSlug = pinMergeTag.value.trim().toLowerCase();
     const description = pinDescription.value.trim();
     const isEditing = pinForm.dataset.editing === 'true';
+
+    // Validate that content is not empty
+    if (!content) {
+        alert('Content cannot be empty');
+        return;
+    }
 
     try {
         if (isEditing) { // Editing existing pin
             const updatedItem = { 
                 ...pinnedHistory[index], 
                 title: title || 'Pinned Item', 
+                content: content,
                 mergeTagSlug: mergeTagSlug || null,
-                description: description || pinnedHistory[index].content 
+                description: description || ''
             };
             const result = await ipcRenderer.invoke('update-pinned-item', index, updatedItem);
             pinnedHistory = result.pinnedHistory;
             mergeTags = result.mergeTags;
         } else { // Adding new pin
-            const content = filteredHistory[index];
             const result = await ipcRenderer.invoke('pin-item-with-merge-tag', {
                 item: content,
                 title: title || 'Pinned Item',
-                mergeTagSlug: mergeTagSlug || null
+                mergeTagSlug: mergeTagSlug || null,
+                description: description
             });
             pinnedHistory = result.pinnedHistory;
             mergeTags = result.mergeTags;
@@ -635,9 +659,11 @@ async function handlePinFormSubmit(e) {
         
         // Show success notification
         await ipcRenderer.invoke('show-notification', 
-            mergeTagSlug ? 
-                `Item pinned with merge tag "${mergeTagSlug}"` : 
-                'Item pinned successfully'
+            isEditing ? 
+                'Pinned item updated successfully' :
+                (mergeTagSlug ? 
+                    `Item pinned with merge tag "${mergeTagSlug}"` : 
+                    'Item pinned successfully')
         );
         
     } catch (error) {

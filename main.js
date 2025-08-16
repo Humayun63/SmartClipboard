@@ -439,7 +439,7 @@ ipcMain.handle('pin-item', (event, item) => {
   return pinnedHistory;
 });
 
-ipcMain.handle('pin-item-with-merge-tag', (event, { item, title, mergeTagSlug }) => {
+ipcMain.handle('pin-item-with-merge-tag', (event, { item, title, mergeTagSlug, description }) => {
   // Validate merge tag slug
   if (mergeTagSlug && !isValidMergeTagSlug(mergeTagSlug)) {
     throw new Error('Invalid merge tag slug. Use only lowercase letters, numbers, and underscores.');
@@ -455,6 +455,7 @@ ipcMain.handle('pin-item-with-merge-tag', (event, { item, title, mergeTagSlug })
     content: typeof item === 'string' ? item : item.content,
     title: title || '',
     mergeTagSlug: mergeTagSlug || null,
+    description: description || '',
     timestamp: Date.now()
   };
   

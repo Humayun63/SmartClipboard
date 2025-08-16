@@ -797,6 +797,22 @@ body {
     box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
 }
 
+#pinContent {
+    min-height: 100px;
+    resize: vertical;
+    font-family: ui-monospace, 'SFMono-Regular', 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', monospace;
+    line-height: 1.5;
+}
+
+#pinContent:required:invalid {
+    border-color: #ff6b6b;
+}
+
+#pinDescription {
+    min-height: 80px;
+    resize: vertical;
+}
+
 .form-actions {
     display: flex;
     justify-content: flex-end;
