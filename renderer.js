@@ -28,6 +28,7 @@ const pinDescription = document.getElementById('pinDescription');
 // State
 let clipboardHistory = [];
 let pinnedHistory = [];
+let filteredPinnedHistory = []; // Add this new state variable
 let mergeTags = {};
 let filteredHistory = [];
 let selectedIndex = -1;
@@ -49,7 +50,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     pinnedHistory = initialPinnedHistory;
     mergeTags = initialMergeTags || {};
     
-    filterHistory();
+    filterHistory(); // This will now also initialize filteredPinnedHistory
     // Force initial render for both tabs to populate cache
     lastRenderedHistoryLength = -1;
     lastRenderedPinnedLength = -1;
@@ -67,7 +68,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Listen for updates from main process
     ipcRenderer.on('update-history', (event, history) => {
         clipboardHistory = history;
-        filterHistory();
+        filterHistory(); // This will update both filtered arrays
         
         // Invalidate cache to ensure re-render when needed
         lastRenderedHistoryLength = -1;
@@ -93,8 +94,14 @@ function setupEventListeners() {
     // Search functionality
     searchInput.addEventListener('input', (e) => {
         filterHistory();
+        // Force render for both tabs since search affects both
+        lastRenderedHistoryLength = -1;
+        lastRenderedPinnedLength = -1;
+        
         if (currentActiveTab === 'history') {
-            renderHistory(true); // Force render for search
+            renderHistory(true);
+        } else if (currentActiveTab === 'pinned') {
+            renderPinnedHistory(true);
         }
     });
     
@@ -288,12 +295,28 @@ function navigatePasteMenu(direction) {
 function filterHistory() {
     const searchTerm = searchInput.value.toLowerCase();
     const pinnedContents = pinnedHistory.map(p => p.content);
+    
     if (searchTerm === '') {
         filteredHistory = clipboardHistory.filter(item => !pinnedContents.includes(item));
+        filteredPinnedHistory = [...pinnedHistory]; // Show all pinned items when no search
     } else {
         filteredHistory = clipboardHistory.filter(item => 
             !pinnedContents.includes(item) && item.toLowerCase().includes(searchTerm)
         );
+        
+        // Filter pinned items based on search term
+        filteredPinnedHistory = pinnedHistory.filter(item => {
+            const content = typeof item === 'string' ? item : item.content;
+            const title = typeof item === 'string' ? '' : (item.title || '');
+            const description = typeof item === 'string' ? item : (item.description || item.content);
+            const mergeTagSlug = typeof item === 'string' ? '' : (item.mergeTagSlug || '');
+            
+            // Search in content, title, description, and merge tag
+            return content.toLowerCase().includes(searchTerm) ||
+                   title.toLowerCase().includes(searchTerm) ||
+                   description.toLowerCase().includes(searchTerm) ||
+                   mergeTagSlug.toLowerCase().includes(searchTerm);
+        });
     }
 }
 
@@ -307,8 +330,8 @@ async function applyTheme () {
 
 // Render Pinned History
 function renderPinnedHistory(forceRender = false) {
-    // Check if content has changed
-    const contentChanged = lastRenderedPinnedLength !== pinnedHistory.length;
+    // Check if content has changed - now use filteredPinnedHistory instead of pinnedHistory
+    const contentChanged = lastRenderedPinnedLength !== filteredPinnedHistory.length;
     
     // Only render if we're on the pinned tab AND (content changed OR forced render)
     if (!forceRender && currentActiveTab !== 'pinned') {
@@ -320,9 +343,9 @@ function renderPinnedHistory(forceRender = false) {
         return;
     }
     
-    lastRenderedPinnedLength = pinnedHistory.length;
+    lastRenderedPinnedLength = filteredPinnedHistory.length;
     
-    if (pinnedHistory.length === 0) {
+    if (filteredPinnedHistory.length === 0) {
         pinnedList.style.display = 'none';
         emptyStatePinned.style.display = 'flex';
         return;
@@ -334,7 +357,7 @@ function renderPinnedHistory(forceRender = false) {
     // Use DocumentFragment for better performance
     const fragment = document.createDocumentFragment();
     
-    pinnedHistory.forEach((item, index) => {
+    filteredPinnedHistory.forEach((item, index) => {
         // Handle both string and object formats
         const content = typeof item === 'string' ? item : item.content;
         const title = typeof item === 'string' ? 'Pinned Item' : (item.title || 'Pinned Item');
@@ -368,14 +391,20 @@ function renderPinnedHistory(forceRender = false) {
         const btnEdit = pinnedItem.querySelector('.btn-edit-pin');
         const btnCopy = pinnedItem.querySelector('.btn-copy');
         
+        // Find the original index in pinnedHistory for unpin and edit operations
+        const originalIndex = pinnedHistory.findIndex(originalItem => {
+            const originalContent = typeof originalItem === 'string' ? originalItem : originalItem.content;
+            return originalContent === content;
+        });
+        
         btnUnpin.addEventListener('click', (e) => {
             e.stopPropagation();
-            unpinItem(index);
+            unpinItem(originalIndex);
         });
 
         btnEdit.addEventListener('click', (e) => {
             e.stopPropagation();
-            openPinModal(index, item);
+            openPinModal(originalIndex, item);
         });
 
         btnCopy.addEventListener('click', (e) => {
