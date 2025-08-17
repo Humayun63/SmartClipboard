@@ -1,6 +1,7 @@
 const { app, BrowserWindow, globalShortcut, clipboard, ipcMain, screen, Menu, Tray, nativeImage, Notification, shell } = require('electron');
 const path = require('path');
 const Store = require('electron-store');
+const { keyboard, Key } = require('@nut-tree-fork/nut-js');
 
 // Initialize persistent storage
 const store = new Store({
@@ -180,12 +181,44 @@ function createTray() {
 // Monitor clipboard changes
 function startClipboardMonitoring() {
   setInterval(() => {
-    const currentContent = clipboard.readText();
+    // Check for text content
+    const currentTextContent = clipboard.readText();
     
-    if (currentContent && currentContent !== lastClipboardContent && currentContent.trim() !== '') {
+    // Check for image content
+    const currentImageContent = clipboard.readImage();
+    
+    let clipboardItem = null;
+    let currentContent = null;
+    
+    if (currentTextContent && currentTextContent.trim() !== '') {
+      clipboardItem = {
+        type: 'text',
+        content: currentTextContent,
+        timestamp: Date.now(),
+        id: Date.now() + Math.random()
+      };
+      currentContent = currentTextContent;
+    } else if (!currentImageContent.isEmpty()) {
+      // Convert image to base64 for storage
+      const imageBase64 = currentImageContent.toDataURL();
+      clipboardItem = {
+        type: 'image',
+        content: imageBase64,
+        timestamp: Date.now(),
+        id: Date.now() + Math.random(),
+        size: currentImageContent.getSize()
+      };
+      currentContent = imageBase64;
+    }
+    
+    if (clipboardItem && currentContent !== lastClipboardContent) {
       // Add to history if it's new content
-      if (!clipboardHistory.includes(currentContent)) {
-        clipboardHistory.unshift(currentContent);
+      const existingItem = clipboardHistory.find(item => 
+        (item.type === clipboardItem.type && item.content === clipboardItem.content)
+      );
+      
+      if (!existingItem) {
+        clipboardHistory.unshift(clipboardItem);
         
         // Limit history size
         const maxSize = store.get('settings.maxHistorySize', 50);
@@ -202,14 +235,21 @@ function startClipboardMonitoring() {
         }
       }
     }
-  }, 200); // Check every 500ms
+  }, 200); // Check every 200ms
 }
 
 // Show notification when clipboard content is captured
-function showClipboardNotification(content) {
+function showClipboardNotification(item) {
+  let body;
+  if (item.type === 'text') {
+    body = `Captured: ${item.content.substring(0, 50)}${item.content.length > 50 ? '...' : ''}`;
+  } else if (item.type === 'image') {
+    body = `Captured: Image (${item.size.width}x${item.size.height})`;
+  }
+  
   const notification = new Notification({
     title: 'Smart Clipboard',
-    body: `Captured: ${content.substring(0, 50)}${content.length > 50 ? '...' : ''}`,
+    body: body,
     icon: path.join(__dirname, 'icon.png'),
     silent: false
   });
@@ -277,20 +317,36 @@ function showPasteMenu() {
   mainWindow.webContents.send('show-paste-menu', clipboardHistory);
 }
 
-const { keyboard, Key } = require('@nut-tree-fork/nut-js');
-
 // Quick paste by index (from clipboard history)
 async function quickPaste(index) {
   console.log(`Quick paste from clipboard history: index ${index}, history length: ${clipboardHistory.length}`);
   if (clipboardHistory.length >= index) {
-    const content = clipboardHistory[index - 1];
-    console.log(`Pasting clipboard item: ${content.substring(0, 50)}...`);
+    const item = clipboardHistory[index - 1];
+    
+    // Handle different item structures (legacy string vs new object)
+    let content, type;
+    if (typeof item === 'string') {
+      content = item;
+      type = 'text';
+    } else {
+      content = item.content;
+      type = item.type;
+    }
+    
+    console.log(`Pasting clipboard item (${type}): ${type === 'text' ? content.substring(0, 50) + '...' : 'Image'}`);
     
     // Store current clipboard content
-    const originalClipboard = clipboard.readText();
+    const originalTextClipboard = clipboard.readText();
+    const originalImageClipboard = clipboard.readImage();
     
-    // Set new content to clipboard
-    clipboard.writeText(content);
+    // Set new content to clipboard based on type
+    if (type === 'text') {
+      clipboard.writeText(content);
+    } else if (type === 'image') {
+      // Convert base64 back to image
+      const image = nativeImage.createFromDataURL(content);
+      clipboard.writeImage(image);
+    }
     
     // Simulate paste
     try {
@@ -302,7 +358,11 @@ async function quickPaste(index) {
     
     // Restore original clipboard after a delay
     setTimeout(() => {
-      clipboard.writeText(originalClipboard);
+      if (originalTextClipboard) {
+        clipboard.writeText(originalTextClipboard);
+      } else if (!originalImageClipboard.isEmpty()) {
+        clipboard.writeImage(originalImageClipboard);
+      }
     }, 500);
   } else {
     console.log(`No clipboard item at index ${index}`);
@@ -314,20 +374,36 @@ async function quickPastePinned(index) {
   console.log(`Quick paste from pinned items: index ${index}, pinned length: ${pinnedHistory.length}`);
   if (pinnedHistory.length >= index) {
     const pinnedItem = pinnedHistory[index - 1];
-    const content = typeof pinnedItem === 'string' ? pinnedItem : pinnedItem.content;
+    
+    // Handle different pinned item structures
+    let content, type;
+    if (typeof pinnedItem === 'string') {
+      content = pinnedItem;
+      type = 'text';
+    } else {
+      content = pinnedItem.content;
+      type = pinnedItem.type || 'text';
+    }
     
     if (!content) {
       console.log(`No content found for pinned item at index ${index}`);
       return;
     }
     
-    console.log(`Pasting pinned item: ${content.substring(0, 50)}...`);
+    console.log(`Pasting pinned item (${type}): ${type === 'text' ? content.substring(0, 50) + '...' : 'Image'}`);
     
     // Store current clipboard content
-    const originalClipboard = clipboard.readText();
+    const originalTextClipboard = clipboard.readText();
+    const originalImageClipboard = clipboard.readImage();
     
-    // Set new content to clipboard
-    clipboard.writeText(content);
+    // Set new content to clipboard based on type
+    if (type === 'text') {
+      clipboard.writeText(content);
+    } else if (type === 'image') {
+      // Convert base64 back to image
+      const image = nativeImage.createFromDataURL(content);
+      clipboard.writeImage(image);
+    }
     
     // Simulate paste
     try {
@@ -339,7 +415,11 @@ async function quickPastePinned(index) {
     
     // Restore original clipboard after a delay
     setTimeout(() => {
-      clipboard.writeText(originalClipboard);
+      if (originalTextClipboard) {
+        clipboard.writeText(originalTextClipboard);
+      } else if (!originalImageClipboard.isEmpty()) {
+        clipboard.writeImage(originalImageClipboard);
+      }
     }, 500);
   } else {
     console.log(`No pinned item at index ${index}`);
@@ -453,17 +533,20 @@ ipcMain.handle('pin-item-with-merge-tag', (event, { item, title, mergeTagSlug, d
   // Create pinned item with merge tag info
   const pinnedItem = {
     content: typeof item === 'string' ? item : item.content,
+    type: typeof item === 'string' ? 'text' : item.type,
     title: title || '',
     mergeTagSlug: mergeTagSlug || null,
     description: description || '',
-    timestamp: Date.now()
+    timestamp: Date.now(),
+    id: typeof item === 'string' ? Date.now() + Math.random() : item.id,
+    size: item.size || null
   };
   
   pinnedHistory.unshift(pinnedItem);
   store.set('pinnedHistory', pinnedHistory);
   
-  // Store merge tag if provided
-  if (mergeTagSlug) {
+  // Store merge tag if provided (only for text content)
+  if (mergeTagSlug && pinnedItem.type === 'text') {
     mergeTags[mergeTagSlug] = pinnedItem.content;
     store.set('mergeTags', mergeTags);
   }
@@ -531,13 +614,30 @@ function isValidMergeTagSlug(slug) {
 
 ipcMain.handle('paste-item', async (event, index) => {
   if (clipboardHistory[index]) {
-    const content = clipboardHistory[index];
+    const item = clipboardHistory[index];
+    
+    // Handle different item structures (legacy string vs new object)
+    let content, type;
+    if (typeof item === 'string') {
+      content = item;
+      type = 'text';
+    } else {
+      content = item.content;
+      type = item.type;
+    }
     
     // Store current clipboard content
-    const originalClipboard = clipboard.readText();
+    const originalTextClipboard = clipboard.readText();
+    const originalImageClipboard = clipboard.readImage();
     
-    // Set new content to clipboard
-    clipboard.writeText(content);
+    // Set new content to clipboard based on type
+    if (type === 'text') {
+      clipboard.writeText(content);
+    } else if (type === 'image') {
+      // Convert base64 back to image
+      const image = nativeImage.createFromDataURL(content);
+      clipboard.writeImage(image);
+    }
     
     // Simulate paste
     try {
@@ -549,7 +649,11 @@ ipcMain.handle('paste-item', async (event, index) => {
     
     // Restore original clipboard after a delay
     setTimeout(() => {
-      clipboard.writeText(originalClipboard);
+      if (originalTextClipboard) {
+        clipboard.writeText(originalTextClipboard);
+      } else if (!originalImageClipboard.isEmpty()) {
+        clipboard.writeImage(originalImageClipboard);
+      }
     }, 500);
     
     // Hide window after paste
@@ -564,6 +668,62 @@ ipcMain.handle('show-notification', (event, message) => {
     body: message,
     icon: path.join(__dirname, 'icon.png')
   }).show();
+});
+
+ipcMain.handle('copy-item', (event, index) => {
+  if (clipboardHistory[index]) {
+    const item = clipboardHistory[index];
+    
+    // Handle different item structures (legacy string vs new object)
+    let content, type;
+    if (typeof item === 'string') {
+      content = item;
+      type = 'text';
+    } else {
+      content = item.content;
+      type = item.type;
+    }
+    
+    // Set content to clipboard based on type
+    if (type === 'text') {
+      clipboard.writeText(content);
+    } else if (type === 'image') {
+      // Convert base64 back to image
+      const image = nativeImage.createFromDataURL(content);
+      clipboard.writeImage(image);
+    }
+    
+    return true;
+  }
+  return false;
+});
+
+ipcMain.handle('copy-pinned-item', (event, index) => {
+  if (pinnedHistory[index]) {
+    const item = pinnedHistory[index];
+    
+    // Handle different item structures (legacy string vs new object)
+    let content, type;
+    if (typeof item === 'string') {
+      content = item;
+      type = 'text';
+    } else {
+      content = item.content;
+      type = item.type || 'text';
+    }
+    
+    // Set content to clipboard based on type
+    if (type === 'text') {
+      clipboard.writeText(content);
+    } else if (type === 'image') {
+      // Convert base64 back to image
+      const image = nativeImage.createFromDataURL(content);
+      clipboard.writeImage(image);
+    }
+    
+    return true;
+  }
+  return false;
 });
 
 ipcMain.handle('hide-paste-menu', () => {

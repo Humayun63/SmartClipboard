@@ -2,8 +2,7 @@
 async function removeItem(index) {
     if (index >= 0 && index < filteredHistory.length) {
         // Find the actual index in clipboardHistory
-        const itemToRemove = filteredHistory[index];
-        const actualIndex = clipboardHistory.indexOf(itemToRemove);
+        const actualIndex = getActualIndex(index);
         if (actualIndex !== -1) {
             clipboardHistory = await ipcRenderer.invoke('remove-item', actualIndex);
             filterHistory();
@@ -322,28 +321,64 @@ function navigatePasteMenu(direction) {
 // Filter history based on search input
 function filterHistory() {
     const searchTerm = searchInput.value.toLowerCase();
-    const pinnedContents = pinnedHistory.map(p => p.content);
+    
+    // Get pinned contents for filtering (handle both string and object formats)
+    const pinnedContents = pinnedHistory.map(p => typeof p === 'string' ? p : p.content);
     
     if (searchTerm === '') {
-        filteredHistory = clipboardHistory.filter(item => !pinnedContents.includes(item));
+        // Filter out pinned items from history (handle both string and object formats)
+        filteredHistory = clipboardHistory.filter(item => {
+            const content = typeof item === 'string' ? item : item.content;
+            return !pinnedContents.includes(content);
+        });
         filteredPinnedHistory = [...pinnedHistory]; // Show all pinned items when no search
     } else {
-        filteredHistory = clipboardHistory.filter(item => 
-            !pinnedContents.includes(item) && item.toLowerCase().includes(searchTerm)
-        );
+        // Filter history items (handle both string and object formats)
+        filteredHistory = clipboardHistory.filter(item => {
+            const content = typeof item === 'string' ? item : item.content;
+            const type = typeof item === 'string' ? 'text' : (item.type || 'text');
+            
+            // Don't include pinned items
+            if (pinnedContents.includes(content)) return false;
+            
+            // For text items, search in content
+            if (type === 'text') {
+                return content.toLowerCase().includes(searchTerm);
+            }
+            // For image items, search in type
+            else if (type === 'image') {
+                return 'image'.includes(searchTerm) || 'picture'.includes(searchTerm) || 'photo'.includes(searchTerm);
+            }
+            
+            return false;
+        });
         
         // Filter pinned items based on search term
         filteredPinnedHistory = pinnedHistory.filter(item => {
             const content = typeof item === 'string' ? item : item.content;
+            const type = typeof item === 'string' ? 'text' : (item.type || 'text');
             const title = typeof item === 'string' ? '' : (item.title || '');
             const description = typeof item === 'string' ? item : (item.description || item.content);
             const mergeTagSlug = typeof item === 'string' ? '' : (item.mergeTagSlug || '');
             
-            // Search in content, title, description, and merge tag
-            return content.toLowerCase().includes(searchTerm) ||
-                   title.toLowerCase().includes(searchTerm) ||
-                   description.toLowerCase().includes(searchTerm) ||
-                   mergeTagSlug.toLowerCase().includes(searchTerm);
+            // For text items, search in content, title, description, and merge tag
+            if (type === 'text') {
+                return content.toLowerCase().includes(searchTerm) ||
+                       title.toLowerCase().includes(searchTerm) ||
+                       description.toLowerCase().includes(searchTerm) ||
+                       mergeTagSlug.toLowerCase().includes(searchTerm);
+            }
+            // For image items, search in title, description, merge tag, and type keywords
+            else if (type === 'image') {
+                return title.toLowerCase().includes(searchTerm) ||
+                       description.toLowerCase().includes(searchTerm) ||
+                       mergeTagSlug.toLowerCase().includes(searchTerm) ||
+                       'image'.includes(searchTerm) || 
+                       'picture'.includes(searchTerm) || 
+                       'photo'.includes(searchTerm);
+            }
+            
+            return false;
         });
     }
 }
@@ -388,6 +423,7 @@ function renderPinnedHistory(forceRender = false) {
     filteredPinnedHistory.forEach((item, index) => {
         // Handle both string and object formats
         const content = typeof item === 'string' ? item : item.content;
+        const type = typeof item === 'string' ? 'text' : (item.type || 'text');
         const title = typeof item === 'string' ? 'Pinned Item' : (item.title || 'Pinned Item');
         const description = typeof item === 'string' ? item : (item.description || item.content);
         const mergeTagSlug = typeof item === 'string' ? null : item.mergeTagSlug;
@@ -399,12 +435,35 @@ function renderPinnedHistory(forceRender = false) {
         pinnedItem.className = 'pinned-item';
         pinnedItem.dataset.index = index;
         
+        let contentHTML;
+        if (type === 'text') {
+            contentHTML = `
+                <div class="pinned-item-content">
+                    <div class="pinned-item-title">${escapeHtml(title)}</div>
+                    ${mergeTagDisplay}
+                    <div class="pinned-item-description">${escapeHtml(description)}</div>
+                </div>
+            `;
+        } else if (type === 'image') {
+            const sizeText = item.size ? `${item.size.width}x${item.size.height}` : 'Unknown size';
+            contentHTML = `
+                <div class="pinned-item-content image-content">
+                    <div class="pinned-item-title">${escapeHtml(title)}</div>
+                    ${mergeTagDisplay}
+                    <div class="pinned-item-image">
+                        <img src="${content}" alt="Pinned image" class="clipboard-image" />
+                    </div>
+                    <div class="pinned-item-meta">
+                        <span class="item-type">📷 Image</span>
+                        <span class="item-size">${sizeText}</span>
+                    </div>
+                    ${item.description ? `<div class="pinned-item-description">${escapeHtml(item.description)}</div>` : ''}
+                </div>
+            `;
+        }
+        
         pinnedItem.innerHTML = `
-            <div class="pinned-item-content">
-                <div class="pinned-item-title">${escapeHtml(title)}</div>
-                ${mergeTagDisplay}
-                <div class="pinned-item-description">${escapeHtml(description)}</div>
-            </div>
+            ${contentHTML}
             <div class="pinned-item-actions">
                 <button class="btn-unpin" title="Unpin">📌</button>
                 <button class="btn-edit-pin" title="Edit">✏️</button>
@@ -413,7 +472,7 @@ function renderPinnedHistory(forceRender = false) {
         `;
         
         // Add event listeners
-        pinnedItem.addEventListener('click', () => copyContent(content));
+        pinnedItem.addEventListener('click', () => copyPinnedItem(item));
 
         const btnUnpin = pinnedItem.querySelector('.btn-unpin');
         const btnEdit = pinnedItem.querySelector('.btn-edit-pin');
@@ -421,8 +480,13 @@ function renderPinnedHistory(forceRender = false) {
         
         // Find the original index in pinnedHistory for unpin and edit operations
         const originalIndex = pinnedHistory.findIndex(originalItem => {
-            const originalContent = typeof originalItem === 'string' ? originalItem : originalItem.content;
-            return originalContent === content;
+            if (typeof originalItem === 'string' && typeof item === 'string') {
+                return originalItem === item;
+            }
+            if (typeof originalItem === 'object' && typeof item === 'object') {
+                return originalItem.id === item.id;
+            }
+            return false;
         });
         
         btnUnpin.addEventListener('click', (e) => {
@@ -437,7 +501,7 @@ function renderPinnedHistory(forceRender = false) {
 
         btnCopy.addEventListener('click', (e) => {
             e.stopPropagation();
-            copyContent(content);
+            copyPinnedItem(item);
         });
         
         fragment.appendChild(pinnedItem);
@@ -482,17 +546,48 @@ function renderHistory(forceRender = false) {
     const fragment = document.createDocumentFragment();
     
     filteredHistory.forEach((item, index) => {
-        const preview = item.length > 100 ? item.substring(0, 100) + '...' : item;
-        
         const historyItem = document.createElement('div');
         historyItem.className = 'history-item';
         historyItem.dataset.index = index;
         
+        // Handle different item structures (legacy string vs new object)
+        let content, type, itemData;
+        if (typeof item === 'string') {
+            content = item;
+            type = 'text';
+            itemData = { content, type };
+        } else {
+            content = item.content;
+            type = item.type || 'text';
+            itemData = item;
+        }
+        
+        let itemContentHTML;
+        if (type === 'text') {
+            const preview = content.length > 100 ? content.substring(0, 100) + '...' : content;
+            itemContentHTML = `
+                <div class="history-item-content">
+                    <div class="history-item-text">${escapeHtml(content)}</div>
+                    <div class="history-item-preview">${escapeHtml(preview)}</div>
+                </div>
+            `;
+        } else if (type === 'image') {
+            const sizeText = itemData.size ? `${itemData.size.width}x${itemData.size.height}` : 'Unknown size';
+            itemContentHTML = `
+                <div class="history-item-content image-content">
+                    <div class="history-item-image">
+                        <img src="${content}" alt="Clipboard image" class="clipboard-image" />
+                    </div>
+                    <div class="history-item-meta">
+                        <span class="item-type">📷 Image</span>
+                        <span class="item-size">${sizeText}</span>
+                    </div>
+                </div>
+            `;
+        }
+        
         historyItem.innerHTML = `
-            <div class="history-item-content">
-                <div class="history-item-text">${escapeHtml(item)}</div>
-                <div class="history-item-preview">${escapeHtml(preview)}</div>
-            </div>
+            ${itemContentHTML}
             <div class="history-item-actions">
                 <button class="btn-pin" title="Pin">📌</button>
                 <button class="btn-copy" title="Copy">📋</button>
@@ -531,29 +626,103 @@ function renderHistory(forceRender = false) {
 }// Copy item from main window
 async function copyItem(index) {
     if (index >= 0 && index < filteredHistory.length) {
-        const textToCopy = filteredHistory[index];
-        await copyContent(textToCopy);
+        const success = await ipcRenderer.invoke('copy-item', getActualIndex(index));
+        if (success) {
+            await ipcRenderer.invoke('show-notification', 'Copied to clipboard!');
+            window.close();
+        }
     }
 }
 
+// Helper function to get actual index in clipboardHistory from filtered index
+function getActualIndex(filteredIndex) {
+    const item = filteredHistory[filteredIndex];
+    return clipboardHistory.findIndex(historyItem => {
+        if (typeof item === 'string' && typeof historyItem === 'string') {
+            return item === historyItem;
+        }
+        if (typeof item === 'object' && typeof historyItem === 'object') {
+            return item.id === historyItem.id;
+        }
+        return false;
+    });
+}
+
 async function copyContent(content) {
+    // This function is kept for backward compatibility but may need updates
     await navigator.clipboard.writeText(content);
     await ipcRenderer.invoke('show-notification', 'Copied to clipboard!');
     window.close();
+}
+
+// Copy pinned item (handles both text and images)
+async function copyPinnedItem(item) {
+    // Find the index of this item in pinnedHistory
+    const index = pinnedHistory.findIndex(pinnedItem => {
+        if (typeof pinnedItem === 'string' && typeof item === 'string') {
+            return pinnedItem === item;
+        }
+        if (typeof pinnedItem === 'object' && typeof item === 'object') {
+            return pinnedItem.id === item.id;
+        }
+        return false;
+    });
+    
+    if (index !== -1) {
+        const success = await ipcRenderer.invoke('copy-pinned-item', index);
+        if (success) {
+            await ipcRenderer.invoke('show-notification', 'Copied to clipboard!');
+            window.close();
+        } else {
+            await ipcRenderer.invoke('show-notification', 'Error copying item!');
+        }
+    }
 }
 
 
 // Show paste menu
 function showPasteMenu(history) {
     pasteMenuList.innerHTML = history.map((item, index) => {
-        const preview = item.length > 100 ? item.substring(0, 100) + '...' : item;
+        // Handle different item structures (legacy string vs new object)
+        let content, type, itemData;
+        if (typeof item === 'string') {
+            content = item;
+            type = 'text';
+            itemData = { content, type };
+        } else {
+            content = item.content;
+            type = item.type || 'text';
+            itemData = item;
+        }
+        
+        let itemContentHTML;
+        if (type === 'text') {
+            const preview = content.length > 100 ? content.substring(0, 100) + '...' : content;
+            itemContentHTML = `
+                <div class="paste-menu-item-content">
+                    <div class="paste-menu-item-text">${escapeHtml(content)}</div>
+                    <div class="paste-menu-item-preview">${escapeHtml(preview)}</div>
+                </div>
+            `;
+        } else if (type === 'image') {
+            const sizeText = itemData.size ? `${itemData.size.width}x${itemData.size.height}` : 'Unknown size';
+            itemContentHTML = `
+                <div class="paste-menu-item-content image-content">
+                    <div class="paste-menu-item-image">
+                        <img src="${content}" alt="Clipboard image" class="clipboard-image-small" />
+                    </div>
+                    <div class="paste-menu-item-meta">
+                        <span class="item-type">📷 Image</span>
+                        <span class="item-size">${sizeText}</span>
+                    </div>
+                </div>
+            `;
+        }
+        
         return `
             <div class="paste-menu-item" data-index="${index}">
                 <div class="paste-menu-item-number">${index + 1}</div>
-                <div class="paste-menu-item-content">
-                    <div class="paste-menu-item-text">${escapeHtml(item)}</div>
-                    <div class="paste-menu-item-preview">${escapeHtml(preview)}</div>
-                </div>
+                ${itemContentHTML}
                 <div class="paste-menu-item-actions">
                     <button class="btn-copy" title="Copy">📋</button>
                     <button class="btn-pin" title="Pin">📌</button>
@@ -596,32 +765,90 @@ function hidePasteMenu() {
 // Pin Modal Functions
 function openPinModal(index, item = null) {
     pinForm.reset();
+    
+    // Get references to preview elements
+    const pinContentPreview = document.getElementById('pinContentPreview');
+    const pinPreviewImage = document.getElementById('pinPreviewImage');
+    const pinPreviewText = document.getElementById('pinPreviewText');
+    const pinPreviewImg = document.getElementById('pinPreviewImg');
+    const pinItemType = document.getElementById('pinItemType');
+    const pinContentGroup = document.getElementById('pinContentGroup');
+    
     if (item) { // Editing a pinned item
         pinModalTitle.textContent = 'Edit Pinned Item';
         pinItemIndex.value = index;
         pinTitle.value = item.title || '';
-        pinContent.value = item.content || '';
         pinMergeTag.value = item.mergeTagSlug || '';
         pinDescription.value = item.description || '';
+        
+        const content = typeof item === 'string' ? item : item.content;
+        const type = typeof item === 'string' ? 'text' : (item.type || 'text');
+        
+        pinItemType.value = type;
+        
+        // Show preview and handle content based on type
+        pinContentPreview.style.display = 'block';
+        
+        if (type === 'image') {
+            // For images, show preview and hide content textarea
+            pinPreviewImage.style.display = 'block';
+            pinPreviewText.style.display = 'none';
+            pinPreviewImg.src = content;
+            pinContentGroup.style.display = 'none';
+            pinContent.value = content; // Still store the base64 data
+        } else {
+            // For text, show text preview and content textarea
+            pinPreviewImage.style.display = 'none';
+            pinPreviewText.style.display = 'block';
+            pinPreviewText.textContent = content;
+            pinContentGroup.style.display = 'block';
+            pinContent.value = content;
+        }
+        
         // Add a flag to indicate we're editing
         pinForm.dataset.editing = 'true';
     } else { // Pinning a new item from history
         pinModalTitle.textContent = 'Pin Item';
         pinItemIndex.value = index;
-        // Pre-fill with the content
-        const content = filteredHistory[index];
-        pinContent.value = content || '';
-        // Keep description empty by default
+        
+        const historyItem = filteredHistory[index];
+        const content = typeof historyItem === 'string' ? historyItem : historyItem.content;
+        const type = typeof historyItem === 'string' ? 'text' : (historyItem.type || 'text');
+        
+        pinItemType.value = type;
+        
+        // Show preview and handle content based on type
+        pinContentPreview.style.display = 'block';
+        
+        if (type === 'image') {
+            // For images, show preview and hide content textarea
+            pinPreviewImage.style.display = 'block';
+            pinPreviewText.style.display = 'none';
+            pinPreviewImg.src = content;
+            pinContentGroup.style.display = 'none';
+            pinContent.value = content; // Store the base64 data
+        } else {
+            // For text, show text preview and content textarea
+            pinPreviewImage.style.display = 'none';
+            pinPreviewText.style.display = 'block';
+            pinPreviewText.textContent = content;
+            pinContentGroup.style.display = 'block';
+            pinContent.value = content;
+        }
+        
+        // Keep description empty by default for new pins
         pinDescription.value = '';
+        
         // Remove the editing flag
         delete pinForm.dataset.editing;
     }
+    
     pinModalOverlay.classList.add('visible');
     
-    // Focus on the content field after a short delay to ensure modal is visible
+    // Focus on the appropriate field after a short delay
     setTimeout(() => {
         if (item) {
-            pinContent.focus();
+            pinTitle.focus();
         } else {
             pinTitle.focus();
         }
@@ -637,6 +864,7 @@ async function handlePinFormSubmit(e) {
     const index = parseInt(pinItemIndex.value);
     const title = pinTitle.value.trim();
     const content = pinContent.value.trim();
+    const type = document.getElementById('pinItemType').value;
     const mergeTagSlug = pinMergeTag.value.trim().toLowerCase();
     const description = pinDescription.value.trim();
     const isEditing = pinForm.dataset.editing === 'true';
@@ -647,23 +875,39 @@ async function handlePinFormSubmit(e) {
         return;
     }
 
+    // For images, merge tags are not supported
+    if (type === 'image' && mergeTagSlug) {
+        alert('Merge tags are not supported for images');
+        return;
+    }
+
     try {
         if (isEditing) { // Editing existing pin
+            const originalItem = pinnedHistory[index];
             const updatedItem = { 
-                ...pinnedHistory[index], 
+                ...originalItem,
                 title: title || 'Pinned Item', 
                 content: content,
-                mergeTagSlug: mergeTagSlug || null,
-                description: description || ''
+                type: type,
+                mergeTagSlug: type === 'text' ? (mergeTagSlug || null) : null,
+                description: description || '',
+                timestamp: originalItem.timestamp || Date.now(),
+                id: originalItem.id || Date.now() + Math.random(),
+                size: originalItem.size || null
             };
             const result = await ipcRenderer.invoke('update-pinned-item', index, updatedItem);
             pinnedHistory = result.pinnedHistory;
             mergeTags = result.mergeTags;
         } else { // Adding new pin
+            const historyItem = filteredHistory[index];
+            const itemToPin = typeof historyItem === 'string' 
+                ? { content: historyItem, type: 'text' }
+                : historyItem;
+                
             const result = await ipcRenderer.invoke('pin-item-with-merge-tag', {
-                item: content,
+                item: itemToPin,
                 title: title || 'Pinned Item',
-                mergeTagSlug: mergeTagSlug || null,
+                mergeTagSlug: type === 'text' ? (mergeTagSlug || null) : null,
                 description: description
             });
             pinnedHistory = result.pinnedHistory;
@@ -687,7 +931,7 @@ async function handlePinFormSubmit(e) {
         await ipcRenderer.invoke('show-notification', 
             isEditing ? 
                 'Pinned item updated successfully' :
-                (mergeTagSlug ? 
+                (mergeTagSlug && type === 'text' ? 
                     `Item pinned with merge tag "${mergeTagSlug}"` : 
                     'Item pinned successfully')
         );
