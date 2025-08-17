@@ -596,6 +596,16 @@ ipcMain.handle('save-settings', (event, settings) => {
 ipcMain.handle('clear-all-data', () => {
   store.clear();
   clipboardHistory = [];
+  pinnedHistory = [];
+  mergeTags = {};
+  store.set('clipboardHistory', clipboardHistory);
+  store.set('pinnedHistory', pinnedHistory);
+  store.set('mergeTags', mergeTags);
+  // Optionally notify renderer processes to update UI
+  if (mainWindow && mainWindow.webContents) {
+    mainWindow.webContents.send('update-history', clipboardHistory);
+    mainWindow.webContents.send('update-pinned', pinnedHistory);
+  }
   return true;
 });
 

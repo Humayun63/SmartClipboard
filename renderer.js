@@ -81,6 +81,16 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     });
     
+
+    ipcRenderer.on('update-pinned', (event, pinned) => {
+        pinnedHistory = pinned;
+        filteredPinnedHistory = [...pinned];
+        lastRenderedPinnedLength = -1;
+        if (currentActiveTab === 'pinned') {
+            renderPinnedHistory(true);
+        }
+    });
+
     ipcRenderer.on('show-paste-menu', (event, history) => {
         showPasteMenu(history);
     });

@@ -53,9 +53,10 @@ function setupEventListeners() {
     
     // Clear data button
     btnClearData.addEventListener('click', async () => {
-        if (confirm('Are you sure you want to clear all clipboard history and settings? This action cannot be undone.')) {
+        if (confirm('Are you sure you want to clear ALL clipboard history and pinned items? This action cannot be undone.')) {
             await ipcRenderer.invoke('clear-all-data');
-            alert('All data has been cleared.');
+            alert('All clipboard history and pinned items have been cleared.');
+            window.location.reload();
         }
     });
     
