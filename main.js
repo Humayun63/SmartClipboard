@@ -455,25 +455,51 @@ async function handleMergeTagReplacement() {
     const mergeTagValue = mergeTags[selectedText.trim()];
     
     if (mergeTagValue) {
-      console.log(`Found merge tag: ${selectedText} -> ${mergeTagValue}`);
+      console.log(`Found merge tag: ${selectedText}`);
       
-      // Replace selected text with merge tag value
-      clipboard.writeText(mergeTagValue);
-      
-      // Paste the replacement text
-      await keyboard.pressKey(Key.LeftSuper, Key.V);
-      await keyboard.releaseKey(Key.LeftSuper, Key.V);
-      
-      // Show notification
-      new Notification({
-        title: 'Smart Clipboard',
-        body: `Replaced "${selectedText}" with merge tag value`,
-        icon: path.join(__dirname, 'icon.png')
-      }).show();
+      // Handle different types of merge tag values
+      if (typeof mergeTagValue === 'string') {
+        // Text merge tag
+        console.log(`Text merge tag: ${selectedText} -> ${mergeTagValue}`);
+        
+        // Replace selected text with merge tag value
+        clipboard.writeText(mergeTagValue);
+        
+        // Paste the replacement text
+        await keyboard.pressKey(Key.LeftSuper, Key.V);
+        await keyboard.releaseKey(Key.LeftSuper, Key.V);
+        
+        // Show notification
+        new Notification({
+          title: 'Smart Clipboard',
+          body: `Replaced "${selectedText}" with merge tag text`,
+          icon: path.join(__dirname, 'icon.png')
+        }).show();
+      } else if (mergeTagValue.type === 'image') {
+        // Image merge tag
+        console.log(`Image merge tag: ${selectedText} -> Image (${mergeTagValue.size ? mergeTagValue.size.width + 'x' + mergeTagValue.size.height : 'unknown size'})`);
+        
+        // Convert base64 back to image and set to clipboard
+        const image = nativeImage.createFromDataURL(mergeTagValue.content);
+        clipboard.writeImage(image);
+        
+        // Paste the image
+        await keyboard.pressKey(Key.LeftSuper, Key.V);
+        await keyboard.releaseKey(Key.LeftSuper, Key.V);
+        
+        // Show notification
+        new Notification({
+          title: 'Smart Clipboard',
+          body: `Replaced "${selectedText}" with merge tag image`,
+          icon: path.join(__dirname, 'icon.png')
+        }).show();
+      }
       
       // Restore original clipboard after a delay
       setTimeout(() => {
-        clipboard.writeText(originalClipboard);
+        if (originalClipboard) {
+          clipboard.writeText(originalClipboard);
+        }
       }, 500);
     } else {
       console.log(`No merge tag found for: ${selectedText}`);
@@ -545,9 +571,14 @@ ipcMain.handle('pin-item-with-merge-tag', (event, { item, title, mergeTagSlug, d
   pinnedHistory.unshift(pinnedItem);
   store.set('pinnedHistory', pinnedHistory);
   
-  // Store merge tag if provided (only for text content)
-  if (mergeTagSlug && pinnedItem.type === 'text') {
-    mergeTags[mergeTagSlug] = pinnedItem.content;
+  // Store merge tag if provided (for both text and images)
+  if (mergeTagSlug) {
+    // For images, we store the entire item object, for text we store just the content
+    if (pinnedItem.type === 'image') {
+      mergeTags[mergeTagSlug] = pinnedItem;
+    } else {
+      mergeTags[mergeTagSlug] = pinnedItem.content;
+    }
     store.set('mergeTags', mergeTags);
   }
   
@@ -594,7 +625,12 @@ ipcMain.handle('update-pinned-item', (event, index, updatedItem) => {
   
   // Update merge tag if provided
   if (updatedItem.mergeTagSlug) {
-    mergeTags[updatedItem.mergeTagSlug] = updatedItem.content;
+    // For images, store the entire item object, for text store just the content
+    if (updatedItem.type === 'image') {
+      mergeTags[updatedItem.mergeTagSlug] = updatedItem;
+    } else {
+      mergeTags[updatedItem.mergeTagSlug] = updatedItem.content;
+    }
     store.set('mergeTags', mergeTags);
   }
   

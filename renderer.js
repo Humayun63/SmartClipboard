@@ -875,11 +875,7 @@ async function handlePinFormSubmit(e) {
         return;
     }
 
-    // For images, merge tags are not supported
-    if (type === 'image' && mergeTagSlug) {
-        alert('Merge tags are not supported for images');
-        return;
-    }
+    // Merge tags are supported for both text and images
 
     try {
         if (isEditing) { // Editing existing pin
@@ -889,7 +885,7 @@ async function handlePinFormSubmit(e) {
                 title: title || 'Pinned Item', 
                 content: content,
                 type: type,
-                mergeTagSlug: type === 'text' ? (mergeTagSlug || null) : null,
+                mergeTagSlug: mergeTagSlug || null,
                 description: description || '',
                 timestamp: originalItem.timestamp || Date.now(),
                 id: originalItem.id || Date.now() + Math.random(),
@@ -907,7 +903,7 @@ async function handlePinFormSubmit(e) {
             const result = await ipcRenderer.invoke('pin-item-with-merge-tag', {
                 item: itemToPin,
                 title: title || 'Pinned Item',
-                mergeTagSlug: type === 'text' ? (mergeTagSlug || null) : null,
+                mergeTagSlug: mergeTagSlug || null,
                 description: description
             });
             pinnedHistory = result.pinnedHistory;
@@ -931,8 +927,8 @@ async function handlePinFormSubmit(e) {
         await ipcRenderer.invoke('show-notification', 
             isEditing ? 
                 'Pinned item updated successfully' :
-                (mergeTagSlug && type === 'text' ? 
-                    `Item pinned with merge tag "${mergeTagSlug}"` : 
+                (mergeTagSlug ? 
+                    `${type === 'image' ? 'Image' : 'Item'} pinned with merge tag "${mergeTagSlug}"` : 
                     'Item pinned successfully')
         );
         
