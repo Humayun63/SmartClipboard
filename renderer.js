@@ -786,21 +786,19 @@ function openPinModal(index, item = null) {
         
         pinItemType.value = type;
         
-        // Show preview and handle content based on type
-        pinContentPreview.style.display = 'block';
-        
+        // Show preview only for images
         if (type === 'image') {
-            // For images, show preview and hide content textarea
+            pinContentPreview.style.display = 'block';
             pinPreviewImage.style.display = 'block';
             pinPreviewText.style.display = 'none';
             pinPreviewImg.src = content;
             pinContentGroup.style.display = 'none';
             pinContent.value = content; // Still store the base64 data
         } else {
-            // For text, show text preview and content textarea
+            // For text, hide preview and show content textarea
+            pinContentPreview.style.display = 'none';
             pinPreviewImage.style.display = 'none';
-            pinPreviewText.style.display = 'block';
-            pinPreviewText.textContent = content;
+            pinPreviewText.style.display = 'none';
             pinContentGroup.style.display = 'block';
             pinContent.value = content;
         }
@@ -817,21 +815,19 @@ function openPinModal(index, item = null) {
         
         pinItemType.value = type;
         
-        // Show preview and handle content based on type
-        pinContentPreview.style.display = 'block';
-        
+        // Show preview only for images
         if (type === 'image') {
-            // For images, show preview and hide content textarea
+            pinContentPreview.style.display = 'block';
             pinPreviewImage.style.display = 'block';
             pinPreviewText.style.display = 'none';
             pinPreviewImg.src = content;
             pinContentGroup.style.display = 'none';
             pinContent.value = content; // Store the base64 data
         } else {
-            // For text, show text preview and content textarea
+            // For text, hide preview and show content textarea
+            pinContentPreview.style.display = 'none';
             pinPreviewImage.style.display = 'none';
-            pinPreviewText.style.display = 'block';
-            pinPreviewText.textContent = content;
+            pinPreviewText.style.display = 'none';
             pinContentGroup.style.display = 'block';
             pinContent.value = content;
         }
