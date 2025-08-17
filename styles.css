@@ -883,4 +883,32 @@ body {
     background: var(--accent-color);
     color: white;
 }
+
+/* Shortcut List */
+.shortcut-list-container {
+    padding: 20px;
+}
+
+.shortcut-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.shortcut-key {
+    font-family: 'Monaco', 'Menlo', monospace;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-size: 13px;
+    color: var(--text-primary);
+}
+
+.shortcut-description {
+    font-size: 14px;
+    color: var(--text-secondary);
+}
  

@@ -206,6 +206,8 @@ function switchTab(tab) {
             renderHistory(true); // Force render
         } else if (tab === 'pinned') {
             renderPinnedHistory(true); // Force render
+        } else if (tab === 'shortcuts') {
+            // No special rendering needed for shortcuts tab
         }
     });
 }

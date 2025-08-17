@@ -32,6 +32,7 @@
             <div class="tab-nav">
                 <button class="tab-btn active" data-tab="history">History</button>
                 <button class="tab-btn" data-tab="pinned">Pinned</button>
+                <button class="tab-btn" data-tab="shortcuts">Shortcuts</button>
             </div>
             <div class="tab-content">
                 <div class="tab-pane active" id="historyTab">
@@ -52,6 +53,30 @@
                         <div class="empty-icon">📌</div>
                         <div class="empty-text">No pinned items yet</div>
                         <div class="empty-subtext">Pin items from your history to see them here.</div>
+                    </div>
+                </div>
+                <div class="tab-pane" id="shortcutsTab">
+                    <div class="shortcut-list-container">
+                        <div class="shortcut-item">
+                            <span class="shortcut-key">⌘ + ⌥ + V</span>
+                            <span class="shortcut-description">Show paste menu</span>
+                        </div>
+                        <div class="shortcut-item">
+                            <span class="shortcut-key">⌘ + ⌥ + 1-9</span>
+                            <span class="shortcut-description">Quick paste by index</span>
+                        </div>
+                        <div class="shortcut-item">
+                            <span class="shortcut-key">⌘ + ⇧ + V</span>
+                            <span class="shortcut-description">Show clipboard history</span>
+                        </div>
+                        <div class="shortcut-item">
+                            <span class="shortcut-key">⌘ + ⇧ + 1-9</span>
+                            <span class="shortcut-description">Pinned items</span>
+                        </div>
+                        <div class="shortcut-item">
+                            <span class="shortcut-key">⌃ + ⌥ + M</span>
+                            <span class="shortcut-description">Merge Tag Replace</span>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -93,17 +118,6 @@
         </div>
     </div>
 
-        <!-- Quick Actions -->
-        <div class="quick-actions">
-            <div class="shortcut-hint">
-                <span class="hint-text">Shortcuts:</span>
-                <span class="shortcut">⌘ + ⌥ + V</span> - Paste Menu
-                <span class="shortcut">⌘ + ⌥ + 1-9</span> - Quick Paste
-                <span class="shortcut">⌘ + ⇧ + V</span> - Show History
-                <span class="shortcut">⌘ + ⇧ + 1-9</span> - Pinned Items
-                <span class="shortcut">⌃ + ⌥ + M</span> - Merge Tag Replace
-            </div>
-        </div>
     </div>
 
     <!-- Paste Menu Overlay -->
