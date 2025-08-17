@@ -135,3 +135,21 @@ function showNotification(message) {
         notification.remove();
     }, 3000);
 } 
+
+// Tab functionality
+document.addEventListener('DOMContentLoaded', () => {
+    const tabs = document.querySelectorAll('.tab-link');
+    const tabContents = document.querySelectorAll('.tab-content');
+
+    tabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+            const target = document.getElementById(tab.dataset.tab);
+
+            tabs.forEach(t => t.classList.remove('active'));
+            tab.classList.add('active');
+
+            tabContents.forEach(c => c.classList.remove('active'));
+            target.classList.add('active');
+        });
+    });
+}); 

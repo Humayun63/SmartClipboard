@@ -12,125 +12,137 @@
             <h1>Settings</h1>
             <button class="btn-close" id="btnClose">✕</button>
         </div>
+
+        <div class="tabs">
+            <button class="tab-link active" data-tab="general">⚙️ General</button>
+            <button class="tab-link" data-tab="shortcuts">⌨️ Shortcuts</button>
+            <button class="tab-link" data-tab="data">🗂️ Control</button>
+            <button class="tab-link" data-tab="about">ℹ️ About</button>
+        </div>
         
         <div class="settings-content">
-            <div class="setting-group">
-                <h3>General</h3>
-                
-                <div class="setting-item">
-                    <label for="maxHistorySize">Maximum History Size:</label>
-                    <input type="number" id="maxHistorySize" min="10" max="200" value="50">
-                    <span class="setting-description">Number of clipboard items to keep in history</span>
-                </div>
-                
-                <div class="setting-item">
-                    <label for="pasteMenuTimeout">Paste Menu Timeout (seconds):</label>
-                    <input type="number" id="pasteMenuTimeout" min="1" max="10" value="3">
-                    <span class="setting-description">How long the paste menu stays open</span>
-                </div>
-            
-                
-                
-                <div class="setting-item">
-                    <label for="theme">Theme:</label>
-                    <select id="theme" class="theme-select">
-                        <option value="light">Light</option>
-                        <option value="dark">Dark</option>
-                        <option value="midnight">Cyber Neon</option>
-                        <option value="solaris">Solaris</option>
-                        <option value="kyoto">Kyoto Garden</option>
-                        <option value="retro">Retro Groove</option>
-                        <option value="oceanic">Oceanic</option>
-                        <option value="sakura">Sakura Dream</option>
-                        <option value="matrix">Matrix</option>
-                        <option value="8bit">8-Bit</option>
-                        <option value="monochrome">Monochrome</option>
-                        <option value="golden">Golden Hour</option>
-                        <option value="cosmic">Cosmic</option>
-                    </select>
-                    <span class="setting-description">Choose your preferred theme</span>
-                </div>
-            </div>
-            
-            <div class="setting-group">
-                <h3>Shortcuts</h3>
-                
-                <div class="shortcut-list">
-                    <div class="shortcut-item">
-                        <span class="shortcut-key">
-                            CMD + ALT + V
-                        </span>
-                        <span class="shortcut-description">Show paste menu</span>
-                    </div>
-                    <div class="shortcut-item">
-                        <span class="shortcut-key">
-                            CMD + ALT + 1-9
-                        </span>
-                        <span class="shortcut-description">Quick paste by index</span>
-                    </div>
-                    <div class="shortcut-item">
-                        <span class="shortcut-key">
-                            CMD + SHIFT + 1-9
-                        </span>
-                        <span class="shortcut-description">Pinned items</span>
-                    </div>
-                    <div class="shortcut-item">
-                        <span class="shortcut-key">
-                            CMD + SHIFT + V
-                        </span>
-                        <span class="shortcut-description">Show clipboard history</span>
-                    </div>
-                    <div class="shortcut-item">
-                        <span class="shortcut-key">
-                            CTRL + ALT + M
-                        </span>
-                        <span class="shortcut-description">Merge tag</span>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="setting-group">
-                <h3>Data</h3>
-                
-                <div class="setting-item">
-                    <button class="btn-clear-data" id="btnClearData">Clear All Data</button>
-                    <span class="setting-description">Remove all clipboard history and settings</span>
-                </div>
-            </div>
-            
-            <div class="setting-group">
-                <h3>Application</h3>
-                
-                <div class="setting-item">
-                    <button class="btn-quit" id="btnQuit">Quit Application</button>
-                    <span class="setting-description">Close Smart Clipboard completely</span>
-                </div>
-            </div>
-            
-            <div class="setting-group">
-                <h3>About</h3>
-                
-                <div class="about-info">
-                    <div class="app-info">
-                        <h4>Smart Clipboard</h4>
-                        <p class="version">Version 1.0.6</p>
-                        <p class="description">A powerful clipboard manager with smart features</p>
+            <div id="general" class="tab-content active">
+                <div class="setting-group">
+                    <h3>General Settings</h3>
+                    
+                    <div class="setting-item">
+                        <label for="maxHistorySize">Maximum History Size:</label>
+                        <input type="number" id="maxHistorySize" min="10" max="200" value="50">
+                        <span class="setting-description">Number of clipboard items to keep in history</span>
                     </div>
                     
-                    <div class="developer-info">
-                        <h4>Developer</h4>
-                        <p><strong>Md. Humayun Kabir</strong></p>
-                        <p>Programmer from Bangladesh</p>
-                        <div class="social-links">
-                            <a href="https://github.com/humayun63" target="_blank" class="social-link">
-                                <span class="social-icon">🐙</span> GitHub
-                            </a>
-                            <a href="https://humayun.netlify.app/" target="_blank" class="social-link">
-                                <span class="social-icon">🌐</span> Portfolio
-                            </a>
-                            <a href="mailto:humayun126224@gmail.com" class="social-link">
-                                <span class="social-icon">📧</span> Email
-                            </a>
+                    <div class="setting-item">
+                        <label for="pasteMenuTimeout">Paste Menu Timeout (seconds):</label>
+                        <input type="number" id="pasteMenuTimeout" min="1" max="10" value="3">
+                        <span class="setting-description">How long the paste menu stays open</span>
+                    </div>
+                
+                    <div class="setting-item">
+                        <label for="theme">Theme:</label>
+                        <select id="theme" class="theme-select">
+                            <option value="light">Light</option>
+                            <option value="dark">Dark</option>
+                            <option value="midnight">Cyber Neon</option>
+                            <option value="solaris">Solaris</option>
+                            <option value="kyoto">Kyoto Garden</option>
+                            <option value="retro">Retro Groove</option>
+                            <option value="oceanic">Oceanic</option>
+                            <option value="sakura">Sakura Dream</option>
+                            <option value="matrix">Matrix</option>
+                            <option value="8bit">8-Bit</option>
+                            <option value="monochrome">Monochrome</option>
+                            <option value="golden">Golden Hour</option>
+                            <option value="cosmic">Cosmic</option>
+                        </select>
+                        <span class="setting-description">Choose your preferred theme</span>
+                    </div>
+                </div>
+            </div>
+
+            <div id="shortcuts" class="tab-content">
+                <div class="setting-group">
+                    <h3>Shortcuts</h3>
+                    
+                    <div class="shortcut-list">
+                        <div class="shortcut-item">
+                            <span class="shortcut-key">
+                                CMD + ALT + V
+                            </span>
+                            <span class="shortcut-description">Show paste menu</span>
+                        </div>
+                        <div class="shortcut-item">
+                            <span class="shortcut-key">
+                                CMD + ALT + 1-9
+                            </span>
+                            <span class="shortcut-description">Quick paste by index</span>
+                        </div>
+                        <div class="shortcut-item">
+                            <span class="shortcut-key">
+                                CMD + SHIFT + 1-9
+                            </span>
+                            <span class="shortcut-description">Pinned items</span>
+                        </div>
+                        <div class="shortcut-item">
+                            <span class="shortcut-key">
+                                CMD + SHIFT + V
+                            </span>
+                            <span class="shortcut-description">Show clipboard history</span>
+                        </div>
+                        <div class="shortcut-item">
+                            <span class="shortcut-key">
+                                CTRL + ALT + M
+                            </span>
+                            <span class="shortcut-description">Merge tag</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="data" class="tab-content">
+                <div class="setting-group">
+                    <h3>Data Management</h3>
+                    
+                    <div class="setting-item">
+                        <button class="btn-clear-data" id="btnClearData">Clear All Data</button>
+                        <span class="setting-description">Remove all clipboard history and settings</span>
+                    </div>
+                </div>
+                <div class="setting-group">
+                    <h3>Application</h3>
+                    
+                    <div class="setting-item">
+                        <button class="btn-quit" id="btnQuit">Quit Application</button>
+                        <span class="setting-description">Close Smart Clipboard completely</span>
+                    </div>
+                </div>
+            </div>
+
+            <div id="about" class="tab-content">
+                <div class="setting-group">
+                    <h3>About</h3>
+                    
+                    <div class="about-info">
+                        <div class="app-info">
+                            <h4>Smart Clipboard</h4>
+                            <p class="version">Version 1.0.6</p>
+                            <p class="description">A powerful clipboard manager with smart features</p>
+                        </div>
+                        
+                        <div class="developer-info">
+                            <h4>Developer</h4>
+                            <p><strong>Md. Humayun Kabir</strong></p>
+                            <p>Programmer from Bangladesh</p>
+                            <div class="social-links">
+                                <a href="https://github.com/humayun63" target="_blank" class="social-link">
+                                    <span class="social-icon">🐙</span> GitHub
+                                </a>
+                                <a href="https://humayun.netlify.app/" target="_blank" class="social-link">
+                                    <span class="social-icon">🌐</span> Portfolio
+                                </a>
+                                <a href="mailto:humayun126224@gmail.com" class="social-link">
+                                    <span class="social-icon">📧</span> Email
+                                </a>
+                            </div>
                         </div>
                     </div>
                 </div>

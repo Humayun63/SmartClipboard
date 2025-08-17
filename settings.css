@@ -469,3 +469,41 @@ body {
 ::-webkit-scrollbar-thumb:hover {
     background: #86868b;
 } 
+
+/* Tabs */
+.tabs {
+    display: flex;
+    background: var(--bg-secondary);
+    padding: 12px 24px 0;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.tab-link {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    background: transparent;
+    border: none;
+    padding: 10px 16px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+}
+
+.tab-link.active {
+    color: var(--accent-color);
+    border-bottom-color: var(--accent-color);
+}
+
+.tab-link:hover {
+    color: var(--accent-color);
+}
+
+.tab-content {
+    display: none;
+}
+
+.tab-content.active {
+    display: block;
+} 
