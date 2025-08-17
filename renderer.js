@@ -1,3 +1,17 @@
+// Remove item from history
+async function removeItem(index) {
+    if (index >= 0 && index < filteredHistory.length) {
+        // Find the actual index in clipboardHistory
+        const itemToRemove = filteredHistory[index];
+        const actualIndex = clipboardHistory.indexOf(itemToRemove);
+        if (actualIndex !== -1) {
+            clipboardHistory = await ipcRenderer.invoke('remove-item', actualIndex);
+            filterHistory();
+            lastRenderedHistoryLength = -1;
+            renderHistory(true);
+        }
+    }
+}
 const { ipcRenderer } = require('electron');
 
 // DOM elements
