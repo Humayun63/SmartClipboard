@@ -285,6 +285,15 @@ function registerGlobalShortcuts() {
     console.log('Ctrl+Alt+M pressed - merge tag replacement');
     handleMergeTagReplacement();
   });
+
+  // Cmd+Alt+A for manual add to pinned
+  globalShortcut.register('CommandOrControl+Alt+A', () => {
+    console.log('Cmd+Alt+A pressed - opening manual add dialog');
+    mainWindow.show();
+    mainWindow.focus();
+    // Switch to pinned tab and trigger manual add
+    mainWindow.webContents.send('open-manual-add');
+  });
   
   // Cmd+Alt+1 through Cmd+Alt+9 for quick paste from clipboard history
   for (let i = 1; i <= 9; i++) {

@@ -46,13 +46,19 @@
                     </div>
                 </div>
                 <div class="tab-pane" id="pinnedTab">
+                    <div class="pinned-tab-header">
+                        <button class="btn-add-manual" id="btnAddManual" title="Add Manual Item">
+                            <span class="add-icon">+</span>
+                            <span>Add Item</span>
+                        </button>
+                    </div>
                     <div class="pinned-list" id="pinnedList">
                         <!-- Pinned items will be populated by JavaScript -->
                     </div>
                     <div class="empty-state" id="emptyStatePinned" style="display: none;">
                         <div class="empty-icon">📌</div>
                         <div class="empty-text">No pinned items yet</div>
-                        <div class="empty-subtext">Pin items from your history to see them here.</div>
+                        <div class="empty-subtext">Pin items from your history or create new ones manually.</div>
                     </div>
                 </div>
                 <div class="tab-pane" id="shortcutsTab">
@@ -60,6 +66,10 @@
                         <div class="shortcut-item">
                             <span class="shortcut-key">CMD + ALT + V</span>
                             <span class="shortcut-description">Show paste menu</span>
+                        </div>
+                        <div class="shortcut-item">
+                            <span class="shortcut-key">CMD + ALT + A</span>
+                            <span class="shortcut-description">Add manual item to pinned</span>
                         </div>
                         <div class="shortcut-item">
                             <span class="shortcut-key">CMD + ALT + 1-9</span>

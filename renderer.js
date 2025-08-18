@@ -21,6 +21,7 @@ const emptyStatePinned = document.getElementById('emptyStatePinned');
 const searchInput = document.querySelector('.search-input');
 const btnClear = document.querySelector('.btn-clear');
 const btnSettings = document.querySelector('.btn-settings');
+const btnAddManual = document.getElementById('btnAddManual');
 const pasteMenuOverlay = document.getElementById('pasteMenuOverlay');
 const pasteMenuList = document.getElementById('pasteMenuList');
 const pasteMenuClose = document.getElementById('pasteMenuClose');
@@ -108,6 +109,15 @@ document.addEventListener('DOMContentLoaded', async () => {
         showPasteMenu(history);
     });
     
+    ipcRenderer.on('open-manual-add', () => {
+        // Switch to pinned tab first
+        switchTab('pinned');
+        // Then open the manual add modal
+        setTimeout(() => {
+            openPinModal(null, null, true);
+        }, 100);
+    });
+    
     // Listen for theme changes
     ipcRenderer.on('theme-changed', (event, theme) => {
         document.documentElement.setAttribute('data-theme', theme);
@@ -142,6 +152,11 @@ function setupEventListeners() {
     // Settings button
     btnSettings.addEventListener('click', () => {
         ipcRenderer.invoke('open-settings');
+    });
+    
+    // Manual add button
+    btnAddManual.addEventListener('click', () => {
+        openPinModal(null, null, true); // true indicates manual creation
     });
     
     // Paste menu close button
@@ -821,7 +836,7 @@ function hidePasteMenu() {
 }
 
 // Pin Modal Functions
-function openPinModal(index, item = null) {
+function openPinModal(index, item = null, isManual = false) {
     pinForm.reset();
     
     // Get references to preview elements
@@ -859,10 +874,32 @@ function openPinModal(index, item = null) {
             pinPreviewText.style.display = 'none';
             pinContentGroup.style.display = 'block';
             pinContent.value = content;
+            pinContent.placeholder = 'Enter or edit the content...'; // Reset placeholder
         }
         
         // Add a flag to indicate we're editing
         pinForm.dataset.editing = 'true';
+    } else if (isManual) { // Creating a manual item
+        pinModalTitle.textContent = 'Add Manual Item';
+        pinItemIndex.value = -1; // Use -1 to indicate manual creation
+        
+        // For manual creation, always show text content field
+        pinContentPreview.style.display = 'none';
+        pinPreviewImage.style.display = 'none';
+        pinPreviewText.style.display = 'none';
+        pinContentGroup.style.display = 'block';
+        pinItemType.value = 'text';
+        pinContent.value = '';
+        pinContent.placeholder = 'Enter your text content here... (e.g., email templates, code snippets, frequently used text)';
+        
+        // Clear other fields
+        pinTitle.value = '';
+        pinMergeTag.value = '';
+        pinDescription.value = '';
+        
+        // Add a flag to indicate manual creation
+        pinForm.dataset.manual = 'true';
+        delete pinForm.dataset.editing;
     } else { // Pinning a new item from history
         pinModalTitle.textContent = 'Pin Item';
         pinItemIndex.value = index;
@@ -888,20 +925,24 @@ function openPinModal(index, item = null) {
             pinPreviewText.style.display = 'none';
             pinContentGroup.style.display = 'block';
             pinContent.value = content;
+            pinContent.placeholder = 'Enter or edit the content...'; // Reset placeholder
         }
         
         // Keep description empty by default for new pins
         pinDescription.value = '';
         
-        // Remove the editing flag
+        // Remove the editing and manual flags
         delete pinForm.dataset.editing;
+        delete pinForm.dataset.manual;
     }
     
     pinModalOverlay.classList.add('visible');
     
     // Focus on the appropriate field after a short delay
     setTimeout(() => {
-        if (item) {
+        if (isManual) {
+            pinContent.focus(); // Focus content field for manual creation
+        } else if (item) {
             pinTitle.focus();
         } else {
             pinTitle.focus();
@@ -911,6 +952,9 @@ function openPinModal(index, item = null) {
 
 function closePinModal() {
     pinModalOverlay.classList.remove('visible');
+    // Clean up any modal state flags
+    delete pinForm.dataset.editing;
+    delete pinForm.dataset.manual;
 }
 
 async function handlePinFormSubmit(e) {
@@ -922,6 +966,7 @@ async function handlePinFormSubmit(e) {
     const mergeTagSlug = pinMergeTag.value.trim().toLowerCase();
     const description = pinDescription.value.trim();
     const isEditing = pinForm.dataset.editing === 'true';
+    const isManual = pinForm.dataset.manual === 'true';
 
     // Validate that content is not empty
     if (!content) {
@@ -948,7 +993,21 @@ async function handlePinFormSubmit(e) {
             const result = await ipcRenderer.invoke('update-pinned-item', index, updatedItem);
             pinnedHistory = result.pinnedHistory;
             mergeTags = result.mergeTags;
-        } else { // Adding new pin
+        } else if (isManual) { // Creating manual pin
+            const manualItem = {
+                content: content,
+                type: type
+            };
+            
+            const result = await ipcRenderer.invoke('pin-item-with-merge-tag', {
+                item: manualItem,
+                title: title || 'Manual Item',
+                mergeTagSlug: mergeTagSlug || null,
+                description: description
+            });
+            pinnedHistory = result.pinnedHistory;
+            mergeTags = result.mergeTags;
+        } else { // Adding new pin from history
             const historyItem = filteredHistory[index];
             const itemToPin = typeof historyItem === 'string' 
                 ? { content: historyItem, type: 'text' }
@@ -981,9 +1040,11 @@ async function handlePinFormSubmit(e) {
         await ipcRenderer.invoke('show-notification', 
             isEditing ? 
                 'Pinned item updated successfully' :
-                (mergeTagSlug ? 
-                    `${type === 'image' ? 'Image' : 'Item'} pinned with merge tag "${mergeTagSlug}"` : 
-                    'Item pinned successfully')
+                isManual ?
+                    'Manual item added successfully' :
+                    (mergeTagSlug ? 
+                        `${type === 'image' ? 'Image' : 'Item'} pinned with merge tag "${mergeTagSlug}"` : 
+                        'Item pinned successfully')
         );
         
     } catch (error) {
