@@ -437,27 +437,31 @@ function renderPinnedHistory(forceRender = false) {
         
         let contentHTML;
         if (type === 'text') {
+            const displayTitle = title.length > 60 ? title.substring(0, 60) + '...' : title;
+            const displayDesc = typeof description === 'string' ? 
+                (description.length > 80 ? description.substring(0, 80) + '...' : description) : '';
             contentHTML = `
                 <div class="pinned-item-content">
-                    <div class="pinned-item-title">${escapeHtml(title)}</div>
+                    <div class="pinned-item-title">${escapeHtml(displayTitle)}</div>
                     ${mergeTagDisplay}
-                    <div class="pinned-item-description">${escapeHtml(description)}</div>
+                    <div class="pinned-item-description">${escapeHtml(displayDesc)}</div>
                 </div>
             `;
         } else if (type === 'image') {
-            const sizeText = item.size ? `${item.size.width}x${item.size.height}` : 'Unknown size';
+            const sizeText = item.size ? `${item.size.width}×${item.size.height}` : 'Unknown size';
+            const displayTitle = title.length > 60 ? title.substring(0, 60) + '...' : title;
             contentHTML = `
-                <div class="pinned-item-content image-content">
-                    <div class="pinned-item-title">${escapeHtml(title)}</div>
+                <div class="pinned-item-image">
+                    <img src="${content}" alt="Pinned image" class="clipboard-image" title="Click to view full size" />
+                </div>
+                <div class="pinned-item-content">
+                    <div class="pinned-item-title">${escapeHtml(displayTitle)}</div>
                     ${mergeTagDisplay}
-                    <div class="pinned-item-image">
-                        <img src="${content}" alt="Pinned image" class="clipboard-image" />
-                    </div>
                     <div class="pinned-item-meta">
-                        <span class="item-type">📷 Image</span>
+                        <span class="item-type">�️ Image</span>
                         <span class="item-size">${sizeText}</span>
                     </div>
-                    ${item.description ? `<div class="pinned-item-description">${escapeHtml(item.description)}</div>` : ''}
+                    ${item.description ? `<div class="pinned-item-description">${escapeHtml(item.description.length > 60 ? item.description.substring(0, 60) + '...' : item.description)}</div>` : ''}
                 </div>
             `;
         }
@@ -473,6 +477,17 @@ function renderPinnedHistory(forceRender = false) {
         
         // Add event listeners
         pinnedItem.addEventListener('click', () => copyPinnedItem(item));
+        
+        // Add image preview functionality for pinned images
+        if (type === 'image') {
+            const imageElement = pinnedItem.querySelector('.clipboard-image');
+            if (imageElement) {
+                imageElement.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    showImagePreview(content);
+                });
+            }
+        }
 
         const btnUnpin = pinnedItem.querySelector('.btn-unpin');
         const btnEdit = pinnedItem.querySelector('.btn-edit-pin');
@@ -564,22 +579,24 @@ function renderHistory(forceRender = false) {
         
         let itemContentHTML;
         if (type === 'text') {
-            const preview = content.length > 100 ? content.substring(0, 100) + '...' : content;
+            const displayText = content.length > 80 ? content.substring(0, 80) + '...' : content;
+            const preview = content.length > 120 ? content.substring(0, 120) + '...' : content;
             itemContentHTML = `
                 <div class="history-item-content">
-                    <div class="history-item-text">${escapeHtml(content)}</div>
+                    <div class="history-item-text">${escapeHtml(displayText)}</div>
                     <div class="history-item-preview">${escapeHtml(preview)}</div>
                 </div>
             `;
         } else if (type === 'image') {
-            const sizeText = itemData.size ? `${itemData.size.width}x${itemData.size.height}` : 'Unknown size';
+            const sizeText = itemData.size ? `${itemData.size.width}×${itemData.size.height}` : 'Unknown size';
             itemContentHTML = `
-                <div class="history-item-content image-content">
-                    <div class="history-item-image">
-                        <img src="${content}" alt="Clipboard image" class="clipboard-image" />
-                    </div>
+                <div class="history-item-image">
+                    <img src="${content}" alt="Clipboard image" class="clipboard-image" title="Click to view full size" />
+                </div>
+                <div class="history-item-content">
+                    <div class="history-item-text">📸 Image Clipboard</div>
                     <div class="history-item-meta">
-                        <span class="item-type">📷 Image</span>
+                        <span class="item-type">�️ Image</span>
                         <span class="item-size">${sizeText}</span>
                     </div>
                 </div>
@@ -597,6 +614,17 @@ function renderHistory(forceRender = false) {
         
         // Add event listeners
         historyItem.addEventListener('click', () => copyItem(index));
+        
+        // Add image preview functionality
+        if (type === 'image') {
+            const imageElement = historyItem.querySelector('.clipboard-image');
+            if (imageElement) {
+                imageElement.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    showImagePreview(content);
+                });
+            }
+        }
         
         const btnPin = historyItem.querySelector('.btn-pin');
         const btnCopy = historyItem.querySelector('.btn-copy');
@@ -623,7 +651,37 @@ function renderHistory(forceRender = false) {
     // Replace content in one operation
     historyList.innerHTML = '';
     historyList.appendChild(fragment);
-}// Copy item from main window
+}// Image preview functionality
+function showImagePreview(imageSrc) {
+    const overlay = document.getElementById('imagePreviewOverlay');
+    const previewImage = document.getElementById('previewImage');
+    const closeBtn = document.getElementById('imagePreviewClose');
+    
+    previewImage.src = imageSrc;
+    overlay.style.display = 'flex';
+    
+    // Close handlers
+    closeBtn.onclick = () => {
+        overlay.style.display = 'none';
+    };
+    
+    overlay.onclick = (e) => {
+        if (e.target === overlay) {
+            overlay.style.display = 'none';
+        }
+    };
+    
+    // Escape key handler
+    const handleEscape = (e) => {
+        if (e.key === 'Escape') {
+            overlay.style.display = 'none';
+            document.removeEventListener('keydown', handleEscape);
+        }
+    };
+    document.addEventListener('keydown', handleEscape);
+}
+
+// Copy item from main window
 async function copyItem(index) {
     if (index >= 0 && index < filteredHistory.length) {
         const success = await ipcRenderer.invoke('copy-item', getActualIndex(index));
