@@ -868,6 +868,8 @@ body {
     white-space: nowrap;
     text-transform: uppercase;
     letter-spacing: 0.3px;
+    width: fit-content;
+    max-width: 100%;
 }
 
 .pinned-item-actions {
