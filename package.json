@@ -28,6 +28,7 @@
   },
   "dependencies": {
     "@nut-tree-fork/nut-js": "^4.1.0",
+    "electron-log": "^5.4.3",
     "electron-store": "^8.1.0"
   },
   "build": {
@@ -49,7 +50,18 @@
     ],
     "mac": {
       "category": "public.app-category.productivity",
-      "icon": "icon.png"
+      "icon": "icon.png",
+      "target": [
+        "dmg",
+        "zip"
+      ],
+      "arch": [
+        "universal"
+      ],
+      "hardenedRuntime": true,
+      "gatekeeperAssess": false,
+      "entitlements": "entitlements.mac.plist",
+      "entitlementsInherit": "entitlements.mac.plist"
     },
     "win": {
       "target": "nsis",

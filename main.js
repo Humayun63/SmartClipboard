@@ -1,7 +1,13 @@
-const { app, BrowserWindow, globalShortcut, clipboard, ipcMain, screen, Menu, Tray, nativeImage, Notification, shell } = require('electron');
+const { app, BrowserWindow, globalShortcut, clipboard, ipcMain, screen, Menu, Tray, nativeImage, Notification, shell, systemPreferences } = require('electron');
 const path = require('path');
+const os = require('os');
 const Store = require('electron-store');
 const { keyboard, Key } = require('@nut-tree-fork/nut-js');
+const log = require('electron-log');
+
+// Configure logger
+log.transports.file.resolvePath = () => path.join(app.getPath('userData'), 'logs/main.log');
+log.info('App starting...');
 
 // Initialize persistent storage
 const store = new Store({
@@ -125,7 +131,7 @@ function createTray() {
     icon = nativeImage.createFromPath(iconPath);
   } catch (error) {
     // Fallback to a simple icon if file doesn't exist
-    console.error('Icon file not found, using default icon');
+    log.error('Icon file not found, using default icon', error);
     icon = nativeImage.createFromDataURL('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTYiIGhlaWdodD0iMTYiIHZpZXdCb3g9IjAgMCAxNiAxNiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjE2IiBoZWlnaHQ9IjE2IiByeD0iMiIgZmlsbD0iIzY2N2VlYSIvPgo8cGF0aCBkPSJNNCw0IEgxMiBNNCw2IEgxMiBNNCw4IEgxMCBNNCwxMCBIMTIiIHN0cm9rZT0id2hpdGUiIHN0cm9rZS13aWR0aD0iMSIvPgo8L3N2Zz4K');
   }
   
@@ -265,54 +271,55 @@ function showClipboardNotification(item) {
 
 // Register global shortcuts
 function registerGlobalShortcuts() {
-  console.log('Registering global shortcuts...');
-  
-  // Cmd+Shift+V for showing clipboard history
-  globalShortcut.register('CommandOrControl+Shift+V', () => {
-    console.log('Cmd+Shift+V pressed - showing clipboard history');
+  log.info('Registering global shortcuts...');
+
+  const registerShortcut = (accelerator, callback) => {
+    const success = globalShortcut.register(accelerator, callback);
+    if (!success) {
+      log.warn(`Failed to register shortcut: ${accelerator}`);
+    }
+    log.info(`Registered shortcut ${accelerator}: ${success}`);
+  };
+
+  registerShortcut('CommandOrControl+Shift+V', () => {
+    log.info('Cmd+Shift+V pressed - showing clipboard history');
     mainWindow.show();
     mainWindow.focus();
   });
-  
-  // Cmd+Option+V for paste menu (alternative to not interfere with normal Cmd+V)
-  globalShortcut.register('CommandOrControl+Alt+V', () => {
-    console.log('Cmd+Alt+V pressed - showing paste menu');
+
+  registerShortcut('CommandOrControl+Alt+V', () => {
+    log.info('Cmd+Alt+V pressed - showing paste menu');
     showPasteMenu();
   });
 
-  // Ctrl+Option+M for merge tag replacement
-  globalShortcut.register('Control+Alt+M', () => {
-    console.log('Ctrl+Alt+M pressed - merge tag replacement');
+  registerShortcut('Control+Alt+M', () => {
+    log.info('Ctrl+Alt+M pressed - merge tag replacement');
     handleMergeTagReplacement();
   });
 
-  // Cmd+Alt+A for manual add to pinned
-  globalShortcut.register('CommandOrControl+Alt+A', () => {
-    console.log('Cmd+Alt+A pressed - opening manual add dialog');
+  registerShortcut('CommandOrControl+Alt+A', () => {
+    log.info('Cmd+Alt+A pressed - opening manual add dialog');
     mainWindow.show();
     mainWindow.focus();
-    // Switch to pinned tab and trigger manual add
     mainWindow.webContents.send('open-manual-add');
   });
-  
-  // Cmd+Alt+1 through Cmd+Alt+9 for quick paste from clipboard history
+
+  // Quick paste shortcuts
   for (let i = 1; i <= 9; i++) {
-    const shortcut = `CommandOrControl+Alt+${i}`;
-    const success = globalShortcut.register(shortcut, () => {
-      console.log(`Shortcut ${shortcut} pressed - quick paste from clipboard history`);
+    const accelerator = `CommandOrControl+Alt+${i}`;
+    registerShortcut(accelerator, () => {
+      log.info(`Shortcut ${accelerator} pressed - quick paste from clipboard history`);
       quickPaste(i);
     });
-    console.log(`Registered ${shortcut}: ${success}`);
   }
-  
-  // Cmd+Shift+1 through Cmd+Shift+9 for pinned items
+
+  // Pinned items shortcuts
   for (let i = 1; i <= 9; i++) {
-    const shortcut = `CommandOrControl+Shift+${i}`;
-    const success = globalShortcut.register(shortcut, () => {
-      console.log(`Shortcut ${shortcut} pressed - quick paste from pinned items`);
+    const accelerator = `CommandOrControl+Shift+${i}`;
+    registerShortcut(accelerator, () => {
+      log.info(`Shortcut ${accelerator} pressed - quick paste from pinned items`);
       quickPastePinned(i);
     });
-    console.log(`Registered ${shortcut}: ${success}`);
   }
 }
 
@@ -328,7 +335,7 @@ function showPasteMenu() {
 
 // Quick paste by index (from clipboard history)
 async function quickPaste(index) {
-  console.log(`Quick paste from clipboard history: index ${index}, history length: ${clipboardHistory.length}`);
+  log.info(`Quick paste from clipboard history: index ${index}, history length: ${clipboardHistory.length}`);
   if (clipboardHistory.length >= index) {
     const item = clipboardHistory[index - 1];
     
@@ -342,7 +349,7 @@ async function quickPaste(index) {
       type = item.type;
     }
     
-    console.log(`Pasting clipboard item (${type}): ${type === 'text' ? content.substring(0, 50) + '...' : 'Image'}`);
+    log.info(`Pasting clipboard item (${type}): ${type === 'text' ? content.substring(0, 50) + '...' : 'Image'}`);
     
     // Store current clipboard content
     const originalTextClipboard = clipboard.readText();
@@ -362,7 +369,7 @@ async function quickPaste(index) {
       await keyboard.pressKey(Key.LeftSuper, Key.V);
       await keyboard.releaseKey(Key.LeftSuper, Key.V);
     } catch (error) {
-      console.error('Error simulating paste:', error);
+      log.error('Error simulating paste:', error);
     }
     
     // Restore original clipboard after a delay
@@ -374,13 +381,13 @@ async function quickPaste(index) {
       }
     }, 500);
   } else {
-    console.log(`No clipboard item at index ${index}`);
+    log.warn(`No clipboard item at index ${index}`);
   }
 }
 
 // Paste pinned item by index (from pinned history only)
 async function quickPastePinned(index) {
-  console.log(`Quick paste from pinned items: index ${index}, pinned length: ${pinnedHistory.length}`);
+  log.info(`Quick paste from pinned items: index ${index}, pinned length: ${pinnedHistory.length}`);
   if (pinnedHistory.length >= index) {
     const pinnedItem = pinnedHistory[index - 1];
     
@@ -395,11 +402,11 @@ async function quickPastePinned(index) {
     }
     
     if (!content) {
-      console.log(`No content found for pinned item at index ${index}`);
+      log.warn(`No content found for pinned item at index ${index}`);
       return;
     }
     
-    console.log(`Pasting pinned item (${type}): ${type === 'text' ? content.substring(0, 50) + '...' : 'Image'}`);
+    log.info(`Pasting pinned item (${type}): ${type === 'text' ? content.substring(0, 50) + '...' : 'Image'}`);
     
     // Store current clipboard content
     const originalTextClipboard = clipboard.readText();
@@ -419,7 +426,7 @@ async function quickPastePinned(index) {
       await keyboard.pressKey(Key.LeftSuper, Key.V);
       await keyboard.releaseKey(Key.LeftSuper, Key.V);
     } catch (error) {
-      console.error('Error simulating paste:', error);
+      log.error('Error simulating paste:', error);
     }
     
     // Restore original clipboard after a delay
@@ -431,14 +438,14 @@ async function quickPastePinned(index) {
       }
     }, 500);
   } else {
-    console.log(`No pinned item at index ${index}`);
+    log.warn(`No pinned item at index ${index}`);
   }
 }
 
 // Handle merge tag replacement
 async function handleMergeTagReplacement() {
   try {
-    console.log('Starting merge tag replacement...');
+    log.info('Starting merge tag replacement...');
     
     // Store original clipboard content
     const originalClipboard = clipboard.readText();
@@ -454,7 +461,7 @@ async function handleMergeTagReplacement() {
     const selectedText = clipboard.readText();
     
     if (!selectedText || selectedText.trim() === '') {
-      console.log('No text selected for merge tag replacement');
+      log.warn('No text selected for merge tag replacement');
       // Restore original clipboard
       clipboard.writeText(originalClipboard);
       return;
@@ -464,12 +471,12 @@ async function handleMergeTagReplacement() {
     const mergeTagValue = mergeTags[selectedText.trim()];
     
     if (mergeTagValue) {
-      console.log(`Found merge tag: ${selectedText}`);
+      log.info(`Found merge tag: ${selectedText}`);
       
       // Handle different types of merge tag values
       if (typeof mergeTagValue === 'string') {
         // Text merge tag
-        console.log(`Text merge tag: ${selectedText} -> ${mergeTagValue}`);
+        log.info(`Text merge tag: ${selectedText} -> ${mergeTagValue}`);
         
         // Replace selected text with merge tag value
         clipboard.writeText(mergeTagValue);
@@ -486,7 +493,7 @@ async function handleMergeTagReplacement() {
         }).show();
       } else if (mergeTagValue.type === 'image') {
         // Image merge tag
-        console.log(`Image merge tag: ${selectedText} -> Image (${mergeTagValue.size ? mergeTagValue.size.width + 'x' + mergeTagValue.size.height : 'unknown size'})`);
+        log.info(`Image merge tag: ${selectedText} -> Image (${mergeTagValue.size ? mergeTagValue.size.width + 'x' + mergeTagValue.size.height : 'unknown size'})`);
         
         // Convert base64 back to image and set to clipboard
         const image = nativeImage.createFromDataURL(mergeTagValue.content);
@@ -511,7 +518,7 @@ async function handleMergeTagReplacement() {
         }
       }, 500);
     } else {
-      console.log(`No merge tag found for: ${selectedText}`);
+      log.warn(`No merge tag found for: ${selectedText}`);
       // Restore original clipboard
       clipboard.writeText(originalClipboard);
       
@@ -523,7 +530,7 @@ async function handleMergeTagReplacement() {
       }).show();
     }
   } catch (error) {
-    console.error('Error in merge tag replacement:', error);
+    log.error('Error in merge tag replacement:', error);
   }
 }
 
@@ -689,7 +696,7 @@ ipcMain.handle('paste-item', async (event, index) => {
       await keyboard.pressKey(Key.LeftSuper, Key.V);
       await keyboard.releaseKey(Key.LeftSuper, Key.V);
     } catch (error) {
-      console.error('Error simulating paste:', error);
+      log.error('Error simulating paste:', error);
     }
     
     // Restore original clipboard after a delay
@@ -827,10 +834,37 @@ ipcMain.handle('open-external-link', (event, url) => {
   shell.openExternal(url);
 });
 
+// Function to check and request Accessibility permissions on macOS
+function checkAccessibilityPermissions() {
+  if (process.platform === 'darwin') {
+    log.info('Checking for macOS Accessibility permissions.');
+    const isTrusted = systemPreferences.isTrustedAccessibilityClient(true); // Prompts user if not trusted
+    log.info(`Accessibility permissions trusted: ${isTrusted}`);
+    if (!isTrusted) {
+      log.warn('Accessibility permissions are not granted. Pasting functionality may not work.');
+      // Optionally, show a dialog to explain why permissions are needed.
+      const notification = new Notification({
+        title: 'Permissions Required',
+        body: 'Smart Clipboard needs Accessibility permissions to paste content. Please grant access in System Settings > Privacy & Security.',
+        icon: path.join(__dirname, 'icon.png'),
+      });
+      notification.show();
+    }
+  }
+}
+
 // App lifecycle
 app.whenReady().then(() => {
+  // Log diagnostic info
+  log.info(`App version: ${app.getVersion()}`);
+  log.info(`OS: ${process.platform} ${os.release()}`);
+  log.info(`Arch: ${os.arch()}`);
+
   // Hide from the Dock
   if (app.dock) app.dock.hide();
+
+  // Check for Accessibility permissions on macOS
+  checkAccessibilityPermissions();
 
   // Enable auto-launch at login
   app.setLoginItemSettings({
