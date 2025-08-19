@@ -12,19 +12,37 @@ const maxHistorySize = document.getElementById('maxHistorySize');
 const pasteMenuTimeout = document.getElementById('pasteMenuTimeout');
 const themeSelect = document.getElementById('theme');
 
+// Shortcut management
+let currentShortcuts = {};
+
 // Initialize settings
 document.addEventListener('DOMContentLoaded', async () => {
-    // Load current settings
-    const settings = await ipcRenderer.invoke('get-settings');
-    
-    maxHistorySize.value = settings.maxHistorySize || 50;
-    pasteMenuTimeout.value = settings.pasteMenuTimeout || 3;
-    themeSelect.value = settings.theme || 'light';
-    
-    // Apply current theme to settings window
-    applyThemeToSettings(themeSelect.value);
-    
-    setupEventListeners();
+    try {
+        console.log('Initializing settings...');
+        
+        // Load current settings
+        const settings = await ipcRenderer.invoke('get-settings');
+        console.log('Loaded settings:', settings);
+        
+        maxHistorySize.value = settings.maxHistorySize || 50;
+        pasteMenuTimeout.value = settings.pasteMenuTimeout || 3;
+        themeSelect.value = settings.theme || 'light';
+        
+        // Load current shortcuts
+        currentShortcuts = await ipcRenderer.invoke('get-shortcuts');
+        console.log('Loaded shortcuts:', currentShortcuts);
+        loadShortcuts();
+        
+        // Apply current theme to settings window
+        applyThemeToSettings(themeSelect.value);
+        
+        setupEventListeners();
+        setupShortcutEventListeners();
+        
+        console.log('Settings initialization complete');
+    } catch (error) {
+        console.error('Error initializing settings:', error);
+    }
 });
 
 // Set up event listeners
@@ -152,4 +170,240 @@ document.addEventListener('DOMContentLoaded', () => {
             target.classList.add('active');
         });
     });
-}); 
+});
+
+// Shortcut management functions
+function loadShortcuts() {
+    console.log('Loading shortcuts into UI...');
+    const shortcutInputs = document.querySelectorAll('.shortcut-input');
+    console.log(`Found ${shortcutInputs.length} shortcut inputs`);
+    
+    shortcutInputs.forEach(input => {
+        const shortcutKey = input.id;
+        if (currentShortcuts[shortcutKey]) {
+            input.value = currentShortcuts[shortcutKey];
+            console.log(`Set ${shortcutKey} = ${currentShortcuts[shortcutKey]}`);
+        } else {
+            // Set placeholder as default if no value exists
+            input.value = input.placeholder;
+            console.log(`Set ${shortcutKey} to placeholder: ${input.placeholder}`);
+        }
+    });
+    console.log('Shortcut loading complete');
+}
+
+function setupShortcutEventListeners() {
+    const btnResetShortcuts = document.getElementById('btnResetShortcuts');
+    const btnSaveShortcuts = document.getElementById('btnSaveShortcuts');
+    
+    if (btnResetShortcuts) {
+        btnResetShortcuts.addEventListener('click', async () => {
+            if (confirm('Are you sure you want to reset all shortcuts to their default values?')) {
+                try {
+                    const result = await ipcRenderer.invoke('reset-shortcuts');
+                    if (result.success) {
+                        currentShortcuts = result.shortcuts;
+                        loadShortcuts();
+                        showNotification('Shortcuts reset to defaults successfully!');
+                    } else {
+                        showNotification('Error resetting shortcuts: ' + result.error);
+                    }
+                } catch (error) {
+                    showNotification('Error resetting shortcuts: ' + error.message);
+                }
+            }
+        });
+    }
+    
+    if (btnSaveShortcuts) {
+        btnSaveShortcuts.addEventListener('click', async () => {
+            await saveShortcuts();
+        });
+    }
+    
+    // Set up shortcut input validation and formatting
+    const shortcutInputs = document.querySelectorAll('.shortcut-input');
+    shortcutInputs.forEach(input => {
+        input.addEventListener('keydown', handleShortcutCapture);
+        input.addEventListener('blur', validateShortcutInput);
+    });
+}
+
+function handleShortcutCapture(event) {
+    event.preventDefault();
+    
+    const modifiers = [];
+    const specialKeys = [];
+    
+    // Capture modifier keys with proper macOS distinction
+    if (event.metaKey) {
+        modifiers.push('Command');
+    }
+    if (event.ctrlKey) {
+        modifiers.push('Control');
+    }
+    if (event.altKey) {
+        modifiers.push('Alt');
+    }
+    if (event.shiftKey) {
+        modifiers.push('Shift');
+    }
+    
+    // Capture main key
+    let mainKey = '';
+    if (event.key.length === 1 && event.key.match(/[a-zA-Z0-9]/)) {
+        mainKey = event.key.toUpperCase();
+    } else {
+        // Handle special keys
+        switch (event.key) {
+            case 'Escape':
+                mainKey = 'Escape';
+                break;
+            case 'Enter':
+                mainKey = 'Return';
+                break;
+            case 'Space':
+                mainKey = 'Space';
+                break;
+            case 'ArrowUp':
+                mainKey = 'Up';
+                break;
+            case 'ArrowDown':
+                mainKey = 'Down';
+                break;
+            case 'ArrowLeft':
+                mainKey = 'Left';
+                break;
+            case 'ArrowRight':
+                mainKey = 'Right';
+                break;
+            case 'Tab':
+                mainKey = 'Tab';
+                break;
+            case 'Delete':
+                mainKey = 'Delete';
+                break;
+            case 'Backspace':
+                mainKey = 'Backspace';
+                break;
+            default:
+                if (event.key.startsWith('F') && event.key.length <= 3) {
+                    mainKey = event.key;
+                }
+                break;
+        }
+    }
+    
+    // Allow shortcuts without modifiers for F-keys and some special combinations
+    const allowedWithoutModifiers = mainKey.startsWith('F') || mainKey === 'Escape';
+    
+    // Build shortcut string
+    let shortcut = '';
+    if (modifiers.length > 0) {
+        shortcut = modifiers.join('+');
+        if (mainKey) {
+            shortcut += '+' + mainKey;
+        }
+    } else if (mainKey && allowedWithoutModifiers) {
+        shortcut = mainKey;
+    }
+    
+    if (shortcut) {
+        event.target.value = shortcut;
+        event.target.classList.remove('error');
+        console.log('Captured shortcut:', shortcut);
+    }
+}
+
+function validateShortcutInput(event) {
+    const input = event.target;
+    const shortcut = input.value.trim();
+    
+    if (!shortcut) {
+        input.classList.remove('error');
+        return;
+    }
+    
+    // More flexible validation - allow F-keys, simple letters with any modifier, or special keys
+    const hasModifiers = /Command|Control|Alt|Shift/.test(shortcut);
+    const isFunctionKey = shortcut.startsWith('F');
+    const isSpecialKey = /Escape|Return|Space|Tab|Delete|Backspace|Up|Down|Left|Right/.test(shortcut);
+    const hasValidPattern = hasModifiers || isFunctionKey || isSpecialKey;
+    
+    if (!hasValidPattern && shortcut.length === 1) {
+        // Allow single letters, numbers if that's what user wants
+        input.classList.remove('error');
+        return;
+    }
+    
+    if (!hasValidPattern) {
+        input.classList.add('error');
+        showNotification('Invalid shortcut: Use modifier keys (Command, Control, Alt, Shift) or function keys');
+        return;
+    }
+    
+    // Check for duplicates
+    const allInputs = document.querySelectorAll('.shortcut-input');
+    let hasDuplicate = false;
+    
+    allInputs.forEach(otherInput => {
+        if (otherInput !== input && otherInput.value.trim() === shortcut) {
+            hasDuplicate = true;
+        }
+    });
+    
+    if (hasDuplicate) {
+        input.classList.add('error');
+        showNotification('Duplicate shortcut: This combination is already used');
+    } else {
+        input.classList.remove('error');
+    }
+}
+
+async function saveShortcuts() {
+    try {
+        console.log('Saving shortcuts...');
+        const shortcutInputs = document.querySelectorAll('.shortcut-input');
+        const newShortcuts = {};
+        
+        // Check for errors first
+        const hasErrors = Array.from(shortcutInputs).some(input => 
+            input.classList.contains('error'));
+        
+        if (hasErrors) {
+            const errorMessage = 'Please fix shortcut errors before saving';
+            console.error(errorMessage);
+            showNotification(errorMessage);
+            return;
+        }
+        
+        // Collect all shortcuts
+        shortcutInputs.forEach(input => {
+            const shortcutKey = input.id;
+            const shortcutValue = input.value.trim();
+            if (shortcutValue) {
+                newShortcuts[shortcutKey] = shortcutValue;
+                console.log(`Collected ${shortcutKey} = ${shortcutValue}`);
+            }
+        });
+        
+        console.log('Sending shortcuts to main process:', newShortcuts);
+        const result = await ipcRenderer.invoke('save-shortcuts', newShortcuts);
+        console.log('Save result:', result);
+        
+        if (result.success) {
+            currentShortcuts = newShortcuts;
+            const successMessage = 'Shortcuts saved successfully!';
+            console.log(successMessage);
+            showNotification(successMessage);
+        } else {
+            const errorMessage = 'Error saving shortcuts: ' + result.error;
+            console.error(errorMessage);
+            showNotification(errorMessage);
+        }
+    } catch (error) {
+        const errorMessage = 'Error saving shortcuts: ' + error.message;
+        console.error(errorMessage);
+        showNotification(errorMessage);
+    }
+} 

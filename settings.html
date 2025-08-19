@@ -61,39 +61,122 @@
 
             <div id="shortcuts" class="tab-content">
                 <div class="setting-group">
-                    <h3>Shortcuts</h3>
+                    <h3>Customize Shortcuts</h3>
+                    <p class="setting-description">Click on a shortcut to edit it. Use standard modifier keys like Cmd, Alt, Ctrl, Shift.</p>
                     
                     <div class="shortcut-list">
-                        <div class="shortcut-item">
-                            <span class="shortcut-key">
-                                CMD + ALT + V
-                            </span>
-                            <span class="shortcut-description">Show paste menu</span>
+                        <div class="shortcut-item editable">
+                            <span class="shortcut-label">Show History:</span>
+                            <input type="text" class="shortcut-input" id="showHistory" placeholder="Command+Shift+V">
+                            <span class="shortcut-description">Open clipboard history window</span>
                         </div>
-                        <div class="shortcut-item">
-                            <span class="shortcut-key">
-                                CMD + ALT + 1-9
-                            </span>
-                            <span class="shortcut-description">Quick paste by index</span>
+                        
+                        <div class="shortcut-item editable">
+                            <span class="shortcut-label">Paste Menu:</span>
+                            <input type="text" class="shortcut-input" id="showPasteMenu" placeholder="Command+Alt+V">
+                            <span class="shortcut-description">Show quick paste menu</span>
                         </div>
-                        <div class="shortcut-item">
-                            <span class="shortcut-key">
-                                CMD + SHIFT + 1-9
-                            </span>
-                            <span class="shortcut-description">Pinned items</span>
+                        
+                        <div class="shortcut-item editable">
+                            <span class="shortcut-label">Merge Tag:</span>
+                            <input type="text" class="shortcut-input" id="mergeTag" placeholder="Control+Alt+M">
+                            <span class="shortcut-description">Replace selected merge tag</span>
                         </div>
-                        <div class="shortcut-item">
-                            <span class="shortcut-key">
-                                CMD + SHIFT + V
-                            </span>
-                            <span class="shortcut-description">Show clipboard history</span>
+                        
+                        <div class="shortcut-item editable">
+                            <span class="shortcut-label">Add to Pinned:</span>
+                            <input type="text" class="shortcut-input" id="addPinned" placeholder="Command+Alt+A">
+                            <span class="shortcut-description">Add item to pinned list</span>
                         </div>
-                        <div class="shortcut-item">
-                            <span class="shortcut-key">
-                                CTRL + ALT + M
-                            </span>
-                            <span class="shortcut-description">Merge tag</span>
+                        
+                        <div class="shortcut-section">
+                            <h4>Quick Paste (History)</h4>
+                            <div class="shortcut-grid">
+                                <div class="shortcut-item editable">
+                                    <span class="shortcut-label">Quick Paste 1:</span>
+                                    <input type="text" class="shortcut-input" id="quickPaste1" placeholder="Command+Alt+1">
+                                </div>
+                                <div class="shortcut-item editable">
+                                    <span class="shortcut-label">Quick Paste 2:</span>
+                                    <input type="text" class="shortcut-input" id="quickPaste2" placeholder="Command+Alt+2">
+                                </div>
+                                <div class="shortcut-item editable">
+                                    <span class="shortcut-label">Quick Paste 3:</span>
+                                    <input type="text" class="shortcut-input" id="quickPaste3" placeholder="Command+Alt+3">
+                                </div>
+                                <div class="shortcut-item editable">
+                                    <span class="shortcut-label">Quick Paste 4:</span>
+                                    <input type="text" class="shortcut-input" id="quickPaste4" placeholder="Command+Alt+4">
+                                </div>
+                                <div class="shortcut-item editable">
+                                    <span class="shortcut-label">Quick Paste 5:</span>
+                                    <input type="text" class="shortcut-input" id="quickPaste5" placeholder="Command+Alt+5">
+                                </div>
+                                <div class="shortcut-item editable">
+                                    <span class="shortcut-label">Quick Paste 6:</span>
+                                    <input type="text" class="shortcut-input" id="quickPaste6" placeholder="Command+Alt+6">
+                                </div>
+                                <div class="shortcut-item editable">
+                                    <span class="shortcut-label">Quick Paste 7:</span>
+                                    <input type="text" class="shortcut-input" id="quickPaste7" placeholder="Command+Alt+7">
+                                </div>
+                                <div class="shortcut-item editable">
+                                    <span class="shortcut-label">Quick Paste 8:</span>
+                                    <input type="text" class="shortcut-input" id="quickPaste8" placeholder="Command+Alt+8">
+                                </div>
+                                <div class="shortcut-item editable">
+                                    <span class="shortcut-label">Quick Paste 9:</span>
+                                    <input type="text" class="shortcut-input" id="quickPaste9" placeholder="Command+Alt+9">
+                                </div>
+                            </div>
                         </div>
+                        
+                        <div class="shortcut-section">
+                            <h4>Pinned Items</h4>
+                            <div class="shortcut-grid">
+                                <div class="shortcut-item editable">
+                                    <span class="shortcut-label">Pinned 1:</span>
+                                    <input type="text" class="shortcut-input" id="pinnedPaste1" placeholder="Command+Shift+1">
+                                </div>
+                                <div class="shortcut-item editable">
+                                    <span class="shortcut-label">Pinned 2:</span>
+                                    <input type="text" class="shortcut-input" id="pinnedPaste2" placeholder="Command+Shift+2">
+                                </div>
+                                <div class="shortcut-item editable">
+                                    <span class="shortcut-label">Pinned 3:</span>
+                                    <input type="text" class="shortcut-input" id="pinnedPaste3" placeholder="Command+Shift+3">
+                                </div>
+                                <div class="shortcut-item editable">
+                                    <span class="shortcut-label">Pinned 4:</span>
+                                    <input type="text" class="shortcut-input" id="pinnedPaste4" placeholder="Command+Shift+4">
+                                </div>
+                                <div class="shortcut-item editable">
+                                    <span class="shortcut-label">Pinned 5:</span>
+                                    <input type="text" class="shortcut-input" id="pinnedPaste5" placeholder="Command+Shift+5">
+                                </div>
+                                <div class="shortcut-item editable">
+                                    <span class="shortcut-label">Pinned 6:</span>
+                                    <input type="text" class="shortcut-input" id="pinnedPaste6" placeholder="Command+Shift+6">
+                                </div>
+                                <div class="shortcut-item editable">
+                                    <span class="shortcut-label">Pinned 7:</span>
+                                    <input type="text" class="shortcut-input" id="pinnedPaste7" placeholder="Command+Shift+7">
+                                </div>
+                                <div class="shortcut-item editable">
+                                    <span class="shortcut-label">Pinned 8:</span>
+                                    <input type="text" class="shortcut-input" id="pinnedPaste8" placeholder="Command+Shift+8">
+                                </div>
+                                <div class="shortcut-item editable">
+                                    <span class="shortcut-label">Pinned 9:</span>
+                                    <input type="text" class="shortcut-input" id="pinnedPaste9" placeholder="Command+Shift+9">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="shortcut-actions">
+                        <button class="btn-reset-shortcuts" id="btnResetShortcuts">Reset to Defaults</button>
+                        <button class="btn-save-shortcuts" id="btnSaveShortcuts">Save Shortcuts</button>
                     </div>
                 </div>
             </div>

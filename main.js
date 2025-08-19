@@ -14,6 +14,30 @@ const store = new Store({
     settings: {
       showTrayIcon: true,
       pasteMenuTimeout: 3000
+    },
+    shortcuts: {
+      showHistory: 'Command+Shift+V',
+      showPasteMenu: 'Command+Alt+V',
+      mergeTag: 'Control+Alt+M',
+      addPinned: 'Command+Alt+A',
+      quickPaste1: 'Command+Alt+1',
+      quickPaste2: 'Command+Alt+2',
+      quickPaste3: 'Command+Alt+3',
+      quickPaste4: 'Command+Alt+4',
+      quickPaste5: 'Command+Alt+5',
+      quickPaste6: 'Command+Alt+6',
+      quickPaste7: 'Command+Alt+7',
+      quickPaste8: 'Command+Alt+8',
+      quickPaste9: 'Command+Alt+9',
+      pinnedPaste1: 'Command+Shift+1',
+      pinnedPaste2: 'Command+Shift+2',
+      pinnedPaste3: 'Command+Shift+3',
+      pinnedPaste4: 'Command+Shift+4',
+      pinnedPaste5: 'Command+Shift+5',
+      pinnedPaste6: 'Command+Shift+6',
+      pinnedPaste7: 'Command+Shift+7',
+      pinnedPaste8: 'Command+Shift+8',
+      pinnedPaste9: 'Command+Shift+9'
     }
   }
 });
@@ -27,6 +51,32 @@ let pinnedHistory = store.get('pinnedHistory', []);
 let mergeTags = store.get('mergeTags', {});
 let lastClipboardContent = '';
 let settings = store.get('settings', {});
+
+// Initialize shortcuts with defaults if not present
+let shortcuts = store.get('shortcuts', {
+  showHistory: 'Command+Shift+V',
+  showPasteMenu: 'Command+Alt+V',
+  mergeTag: 'Control+Alt+M',
+  addPinned: 'Command+Alt+A',
+  quickPaste1: 'Command+Alt+1',
+  quickPaste2: 'Command+Alt+2',
+  quickPaste3: 'Command+Alt+3',
+  quickPaste4: 'Command+Alt+4',
+  quickPaste5: 'Command+Alt+5',
+  quickPaste6: 'Command+Alt+6',
+  quickPaste7: 'Command+Alt+7',
+  quickPaste8: 'Command+Alt+8',
+  quickPaste9: 'Command+Alt+9',
+  pinnedPaste1: 'Command+Shift+1',
+  pinnedPaste2: 'Command+Shift+2',
+  pinnedPaste3: 'Command+Shift+3',
+  pinnedPaste4: 'Command+Shift+4',
+  pinnedPaste5: 'Command+Shift+5',
+  pinnedPaste6: 'Command+Shift+6',
+  pinnedPaste7: 'Command+Shift+7',
+  pinnedPaste8: 'Command+Shift+8',
+  pinnedPaste9: 'Command+Shift+9'
+});
 
 // Create the main window
 function createWindow() {
@@ -267,52 +317,81 @@ function showClipboardNotification(item) {
 function registerGlobalShortcuts() {
   console.log('Registering global shortcuts...');
   
-  // Cmd+Shift+V for showing clipboard history
-  globalShortcut.register('CommandOrControl+Shift+V', () => {
-    console.log('Cmd+Shift+V pressed - showing clipboard history');
-    mainWindow.show();
-    mainWindow.focus();
-  });
+  // Use the global shortcuts variable
+  const currentShortcuts = shortcuts;
   
-  // Cmd+Option+V for paste menu (alternative to not interfere with normal Cmd+V)
-  globalShortcut.register('CommandOrControl+Alt+V', () => {
-    console.log('Cmd+Alt+V pressed - showing paste menu');
-    showPasteMenu();
-  });
+  try {
+    // Unregister all existing shortcuts first
+    globalShortcut.unregisterAll();
+    
+    // Show clipboard history
+    if (currentShortcuts.showHistory) {
+      const success = globalShortcut.register(currentShortcuts.showHistory, () => {
+        console.log(`${currentShortcuts.showHistory} pressed - showing clipboard history`);
+        mainWindow.show();
+        mainWindow.focus();
+      });
+      console.log(`Registered showHistory (${currentShortcuts.showHistory}): ${success}`);
+    }
+    
+    // Show paste menu
+    if (currentShortcuts.showPasteMenu) {
+      const success = globalShortcut.register(currentShortcuts.showPasteMenu, () => {
+        console.log(`${currentShortcuts.showPasteMenu} pressed - showing paste menu`);
+        showPasteMenu();
+      });
+      console.log(`Registered showPasteMenu (${currentShortcuts.showPasteMenu}): ${success}`);
+    }
 
-  // Ctrl+Option+M for merge tag replacement
-  globalShortcut.register('Control+Alt+M', () => {
-    console.log('Ctrl+Alt+M pressed - merge tag replacement');
-    handleMergeTagReplacement();
-  });
+    // Merge tag replacement
+    if (currentShortcuts.mergeTag) {
+      const success = globalShortcut.register(currentShortcuts.mergeTag, () => {
+        console.log(`${currentShortcuts.mergeTag} pressed - merge tag replacement`);
+        handleMergeTagReplacement();
+      });
+      console.log(`Registered mergeTag (${currentShortcuts.mergeTag}): ${success}`);
+    }
 
-  // Cmd+Alt+A for manual add to pinned
-  globalShortcut.register('CommandOrControl+Alt+A', () => {
-    console.log('Cmd+Alt+A pressed - opening manual add dialog');
-    mainWindow.show();
-    mainWindow.focus();
-    // Switch to pinned tab and trigger manual add
-    mainWindow.webContents.send('open-manual-add');
-  });
-  
-  // Cmd+Alt+1 through Cmd+Alt+9 for quick paste from clipboard history
-  for (let i = 1; i <= 9; i++) {
-    const shortcut = `CommandOrControl+Alt+${i}`;
-    const success = globalShortcut.register(shortcut, () => {
-      console.log(`Shortcut ${shortcut} pressed - quick paste from clipboard history`);
-      quickPaste(i);
-    });
-    console.log(`Registered ${shortcut}: ${success}`);
-  }
-  
-  // Cmd+Shift+1 through Cmd+Shift+9 for pinned items
-  for (let i = 1; i <= 9; i++) {
-    const shortcut = `CommandOrControl+Shift+${i}`;
-    const success = globalShortcut.register(shortcut, () => {
-      console.log(`Shortcut ${shortcut} pressed - quick paste from pinned items`);
-      quickPastePinned(i);
-    });
-    console.log(`Registered ${shortcut}: ${success}`);
+    // Add to pinned
+    if (currentShortcuts.addPinned) {
+      const success = globalShortcut.register(currentShortcuts.addPinned, () => {
+        console.log(`${currentShortcuts.addPinned} pressed - opening manual add dialog`);
+        mainWindow.show();
+        mainWindow.focus();
+        // Switch to pinned tab and trigger manual add
+        mainWindow.webContents.send('open-manual-add');
+      });
+      console.log(`Registered addPinned (${currentShortcuts.addPinned}): ${success}`);
+    }
+    
+    // Quick paste from clipboard history (1-9)
+    for (let i = 1; i <= 9; i++) {
+      const shortcutKey = `quickPaste${i}`;
+      const shortcut = currentShortcuts[shortcutKey];
+      if (shortcut) {
+        const success = globalShortcut.register(shortcut, () => {
+          console.log(`Shortcut ${shortcut} pressed - quick paste from clipboard history`);
+          quickPaste(i);
+        });
+        console.log(`Registered ${shortcutKey} (${shortcut}): ${success}`);
+      }
+    }
+    
+    // Quick paste from pinned items (1-9)
+    for (let i = 1; i <= 9; i++) {
+      const shortcutKey = `pinnedPaste${i}`;
+      const shortcut = currentShortcuts[shortcutKey];
+      if (shortcut) {
+        const success = globalShortcut.register(shortcut, () => {
+          console.log(`Shortcut ${shortcut} pressed - quick paste from pinned items`);
+          quickPastePinned(i);
+        });
+        console.log(`Registered ${shortcutKey} (${shortcut}): ${success}`);
+      }
+    }
+    
+  } catch (error) {
+    console.error('Error registering shortcuts:', error);
   }
 }
 
@@ -798,6 +877,106 @@ ipcMain.handle('save-settings', (event, settings) => {
   return true;
 });
 
+// Shortcuts IPC handlers
+ipcMain.handle('get-shortcuts', () => {
+  return store.get('shortcuts', {});
+});
+
+ipcMain.handle('save-shortcuts', (event, newShortcuts) => {
+  try {
+    // Validate shortcuts before saving
+    const validShortcuts = validateShortcuts(newShortcuts);
+    
+    // Save to store
+    store.set('shortcuts', validShortcuts);
+    shortcuts = validShortcuts;
+    
+    // Re-register global shortcuts with new values
+    registerGlobalShortcuts();
+    
+    return { success: true };
+  } catch (error) {
+    console.error('Error saving shortcuts:', error);
+    return { success: false, error: error.message };
+  }
+});
+
+ipcMain.handle('reset-shortcuts', () => {
+  try {
+    // Get default shortcuts
+    const defaultShortcuts = {
+      showHistory: 'Command+Shift+V',
+      showPasteMenu: 'Command+Alt+V',
+      mergeTag: 'Control+Alt+M',
+      addPinned: 'Command+Alt+A',
+      quickPaste1: 'Command+Alt+1',
+      quickPaste2: 'Command+Alt+2',
+      quickPaste3: 'Command+Alt+3',
+      quickPaste4: 'Command+Alt+4',
+      quickPaste5: 'Command+Alt+5',
+      quickPaste6: 'Command+Alt+6',
+      quickPaste7: 'Command+Alt+7',
+      quickPaste8: 'Command+Alt+8',
+      quickPaste9: 'Command+Alt+9',
+      pinnedPaste1: 'Command+Shift+1',
+      pinnedPaste2: 'Command+Shift+2',
+      pinnedPaste3: 'Command+Shift+3',
+      pinnedPaste4: 'Command+Shift+4',
+      pinnedPaste5: 'Command+Shift+5',
+      pinnedPaste6: 'Command+Shift+6',
+      pinnedPaste7: 'Command+Shift+7',
+      pinnedPaste8: 'Command+Shift+8',
+      pinnedPaste9: 'Command+Shift+9'
+    };
+    
+    store.set('shortcuts', defaultShortcuts);
+    shortcuts = defaultShortcuts;
+    
+    // Re-register with defaults
+    registerGlobalShortcuts();
+    
+    return { success: true, shortcuts: defaultShortcuts };
+  } catch (error) {
+    console.error('Error resetting shortcuts:', error);
+    return { success: false, error: error.message };
+  }
+});
+
+// Validate shortcut format and check for duplicates
+function validateShortcuts(newShortcuts) {
+  const usedShortcuts = new Set();
+  const validatedShortcuts = {};
+  
+  for (const [key, shortcut] of Object.entries(newShortcuts)) {
+    if (!shortcut || shortcut.trim() === '') {
+      continue; // Skip empty shortcuts
+    }
+    
+    const normalizedShortcut = shortcut.trim();
+    
+    // Check for duplicates
+    if (usedShortcuts.has(normalizedShortcut)) {
+      throw new Error(`Duplicate shortcut found: ${normalizedShortcut}`);
+    }
+    
+    // More flexible validation - allow various combinations
+    const hasModifiers = /Command|Control|Alt|Shift/.test(normalizedShortcut);
+    const isFunctionKey = normalizedShortcut.startsWith('F');
+    const isSpecialKey = /Escape|Return|Space|Tab|Delete|Backspace|Up|Down|Left|Right/.test(normalizedShortcut);
+    const isSingleChar = normalizedShortcut.length === 1 && /[a-zA-Z0-9]/.test(normalizedShortcut);
+    
+    // Allow shortcuts with modifiers, function keys, special keys, or even single characters
+    if (!hasModifiers && !isFunctionKey && !isSpecialKey && !isSingleChar) {
+      throw new Error(`Invalid shortcut format: ${normalizedShortcut}. Use modifier keys, function keys, or valid characters.`);
+    }
+    
+    usedShortcuts.add(normalizedShortcut);
+    validatedShortcuts[key] = normalizedShortcut;
+  }
+  
+  return validatedShortcuts;
+}
+
 ipcMain.handle('clear-all-data', () => {
   store.clear();
   clipboardHistory = [];
@@ -838,6 +1017,49 @@ app.whenReady().then(() => {
     openAsHidden: true,
     path: app.getPath('exe'),
   });
+  
+  // Ensure shortcuts are saved if they don't exist or are incomplete
+  const currentStoredShortcuts = store.get('shortcuts', {});
+  const defaultShortcuts = {
+    showHistory: 'Command+Shift+V',
+    showPasteMenu: 'Command+Alt+V',
+    mergeTag: 'Control+Alt+M',
+    addPinned: 'Command+Alt+A',
+    quickPaste1: 'Command+Alt+1',
+    quickPaste2: 'Command+Alt+2',
+    quickPaste3: 'Command+Alt+3',
+    quickPaste4: 'Command+Alt+4',
+    quickPaste5: 'Command+Alt+5',
+    quickPaste6: 'Command+Alt+6',
+    quickPaste7: 'Command+Alt+7',
+    quickPaste8: 'Command+Alt+8',
+    quickPaste9: 'Command+Alt+9',
+    pinnedPaste1: 'Command+Shift+1',
+    pinnedPaste2: 'Command+Shift+2',
+    pinnedPaste3: 'Command+Shift+3',
+    pinnedPaste4: 'Command+Shift+4',
+    pinnedPaste5: 'Command+Shift+5',
+    pinnedPaste6: 'Command+Shift+6',
+    pinnedPaste7: 'Command+Shift+7',
+    pinnedPaste8: 'Command+Shift+8',
+    pinnedPaste9: 'Command+Shift+9'
+  };
+  
+  // Migration: Convert old CommandOrControl format to Command
+  const migratedShortcuts = {};
+  for (const [key, value] of Object.entries(currentStoredShortcuts)) {
+    if (typeof value === 'string' && value.includes('CommandOrControl')) {
+      migratedShortcuts[key] = value.replace(/CommandOrControl/g, 'Command');
+      console.log(`Migrated shortcut ${key}: ${value} -> ${migratedShortcuts[key]}`);
+    } else {
+      migratedShortcuts[key] = value;
+    }
+  }
+  
+  // Merge with defaults, prioritizing migrated user shortcuts
+  const mergedShortcuts = { ...defaultShortcuts, ...migratedShortcuts };
+  store.set('shortcuts', mergedShortcuts);
+  shortcuts = mergedShortcuts;
   
   createWindow();
   createTray();

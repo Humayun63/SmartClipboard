@@ -40,6 +40,10 @@ const pinContent = document.getElementById('pinContent');
 const pinMergeTag = document.getElementById('pinMergeTag');
 const pinDescription = document.getElementById('pinDescription');
 
+// Shortcuts elements
+const shortcutsList = document.getElementById('shortcutsList');
+const btnCustomizeShortcuts = document.getElementById('btnCustomizeShortcuts');
+
 
 // State
 let clipboardHistory = [];
@@ -80,6 +84,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     // Set up event listeners
     setupEventListeners();
+    
+    // Load and display current shortcuts
+    await loadShortcuts();
     
     // Listen for updates from main process
     ipcRenderer.on('update-history', (event, history) => {
@@ -153,6 +160,13 @@ function setupEventListeners() {
     btnSettings.addEventListener('click', () => {
         ipcRenderer.invoke('open-settings');
     });
+    
+    // Customize shortcuts button
+    if (btnCustomizeShortcuts) {
+        btnCustomizeShortcuts.addEventListener('click', () => {
+            ipcRenderer.invoke('open-settings');
+        });
+    }
     
     // Manual add button
     btnAddManual.addEventListener('click', () => {
@@ -1086,4 +1100,101 @@ function escapeHtml(text) {
 function truncateText(text, maxLength) {
     if (text.length <= maxLength) return text;
     return text.substring(0, maxLength) + '...';
+}
+
+// Shortcuts management
+async function loadShortcuts() {
+    try {
+        const shortcuts = await ipcRenderer.invoke('get-shortcuts');
+        displayShortcuts(shortcuts);
+    } catch (error) {
+        console.error('Error loading shortcuts:', error);
+    }
+}
+
+function displayShortcuts(shortcuts) {
+    if (!shortcutsList) return;
+    
+    const shortcutDescriptions = {
+        showHistory: 'Show clipboard history window',
+        showPasteMenu: 'Show quick paste menu',
+        mergeTag: 'Replace selected merge tag',
+        addPinned: 'Add current clipboard to pinned',
+        quickPaste1: 'Quick paste item 1',
+        quickPaste2: 'Quick paste item 2',
+        quickPaste3: 'Quick paste item 3',
+        quickPaste4: 'Quick paste item 4',
+        quickPaste5: 'Quick paste item 5',
+        quickPaste6: 'Quick paste item 6',
+        quickPaste7: 'Quick paste item 7',
+        quickPaste8: 'Quick paste item 8',
+        quickPaste9: 'Quick paste item 9',
+        pinnedPaste1: 'Paste pinned item 1',
+        pinnedPaste2: 'Paste pinned item 2',
+        pinnedPaste3: 'Paste pinned item 3',
+        pinnedPaste4: 'Paste pinned item 4',
+        pinnedPaste5: 'Paste pinned item 5',
+        pinnedPaste6: 'Paste pinned item 6',
+        pinnedPaste7: 'Paste pinned item 7',
+        pinnedPaste8: 'Paste pinned item 8',
+        pinnedPaste9: 'Paste pinned item 9'
+    };
+    
+    // Group shortcuts for better display
+    const mainShortcuts = ['showHistory', 'showPasteMenu', 'mergeTag', 'addPinned'];
+    const quickPasteShortcuts = ['quickPaste1', 'quickPaste2', 'quickPaste3', 'quickPaste4', 'quickPaste5', 'quickPaste6', 'quickPaste7', 'quickPaste8', 'quickPaste9'];
+    const pinnedShortcuts = ['pinnedPaste1', 'pinnedPaste2', 'pinnedPaste3', 'pinnedPaste4', 'pinnedPaste5', 'pinnedPaste6', 'pinnedPaste7', 'pinnedPaste8', 'pinnedPaste9'];
+    
+    let html = '';
+    
+    // Main shortcuts
+    html += '<div class="shortcut-group"><h4>Main Functions</h4>';
+    mainShortcuts.forEach(key => {
+        if (shortcuts[key]) {
+            html += `
+                <div class="shortcut-item">
+                    <span class="shortcut-key">${formatShortcutKey(shortcuts[key])}</span>
+                    <span class="shortcut-description">${shortcutDescriptions[key]}</span>
+                </div>
+            `;
+        }
+    });
+    html += '</div>';
+    
+    // Quick paste shortcuts (condensed)
+    html += '<div class="shortcut-group"><h4>Quick Paste (History)</h4>';
+    const quickPastePattern = shortcuts.quickPaste1 ? shortcuts.quickPaste1.replace('1', '1-9') : 'Cmd+Alt+1-9';
+    html += `
+        <div class="shortcut-item">
+            <span class="shortcut-key">${formatShortcutKey(quickPastePattern)}</span>
+            <span class="shortcut-description">Quick paste from clipboard history</span>
+        </div>
+    `;
+    html += '</div>';
+    
+    // Pinned shortcuts (condensed)
+    html += '<div class="shortcut-group"><h4>Pinned Items</h4>';
+    const pinnedPattern = shortcuts.pinnedPaste1 ? shortcuts.pinnedPaste1.replace('1', '1-9') : 'Cmd+Shift+1-9';
+    html += `
+        <div class="shortcut-item">
+            <span class="shortcut-key">${formatShortcutKey(pinnedPattern)}</span>
+            <span class="shortcut-description">Paste from pinned items</span>
+        </div>
+    `;
+    html += '</div>';
+    
+    shortcutsList.innerHTML = html;
+}
+
+function formatShortcutKey(shortcut) {
+    if (!shortcut) return '';
+    
+    return shortcut
+        .replace(/CommandOrControl/g, '⌘')
+        .replace(/Command/g, '⌘')
+        .replace(/Ctrl/g, '⌃')
+        .replace(/Alt/g, '⌥')
+        .replace(/Shift/g, '⇧')
+        .replace(/\+/g, ' + ')
+        .toUpperCase();
 }

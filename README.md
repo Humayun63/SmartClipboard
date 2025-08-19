@@ -83,27 +83,40 @@ npm run dist
 
 ### Basic Operations
 1. **Copy text** - Any text you copy is automatically saved to history
-2. **Show paste menu** - Press `Cmd+Option+V` to see all recent clipboard items
-3. **Quick paste** - Use `Cmd+Alt+1` through `Cmd+Alt+9` for instant pasting
-4. **Paste pinned item** - Use `Cmd+Shift+1` through `Cmd+Shift+9` to paste pinned items
-5. **Merge tag replacement** - Select merge tag text and press `Ctrl+Option+M` to replace with saved content
+2. **Show paste menu** - Press `Cmd+Option+V` to see all recent clipboard items (customizable)
+3. **Quick paste** - Use `Cmd+Alt+1` through `Cmd+Alt+9` for instant pasting (customizable)
+4. **Paste pinned item** - Use `Cmd+Shift+1` through `Cmd+Shift+9` to paste pinned items (customizable)
+5. **Merge tag replacement** - Select merge tag text and press `Ctrl+Option+M` to replace with saved content (customizable)
+6. **Show history** - Press `Cmd+Shift+V` to open the full history window (customizable)
 
-### Keyboard Shortcuts
+### Customizable Keyboard Shortcuts
+All keyboard shortcuts can be customized through the Settings window. Default shortcuts include:
+
+**Main Functions:**
 - `⌘ + ⇧ + V` - Show Smart Clipboard main window
 - `⌘ + ⌥ + V` - Show paste menu overlay
-- `⌘ + ⌥ + 1-9` - Quick paste from clipboard history
-- `⌘ + ⇧ + 1-9` - Quick paste from pinned items
+- `⌘ + ⌥ + A` - Add current clipboard to pinned items
 - `⌃ + ⌥ + M` - Replace selected merge tag with saved content
-5. **Show history** - Press `Cmd+Shift+V` to open the full history window
+
+**Quick Paste from History:**
+- `⌘ + ⌥ + 1-9` - Quick paste from clipboard history (positions 1-9)
+
+**Quick Paste from Pinned Items:**
+- `⌘ + ⇧ + 1-9` - Quick paste from pinned items (slots 1-9)
+
+### Customizing Shortcuts
+1. Open Settings from the system tray menu or main window
+2. Navigate to the **Shortcuts** tab
+3. Click on any shortcut field to edit it
+4. Press the desired key combination (must include modifier keys like Cmd, Alt, Ctrl, Shift)
+5. Click "Save Shortcuts" to apply changes
+6. Use "Reset to Defaults" to restore original shortcuts
+
+**Shortcut Rules:**
+- Must include at least one modifier key (Cmd, Alt, Ctrl, Shift) unless using F-keys
+- Cannot have duplicate shortcuts
+- Changes apply immediately after saving
 
 ### System Tray
 - Click the tray icon to show clipboard history
 - Right-click for options: Show History, Clear History, Settings, Quit
-
-### Keyboard Shortcuts
-- `Cmd+Option+V` - Show paste menu
-- `Cmd+Alt+1-9` - Quick paste by index
-- `Cmd+Shift+1-9` - Paste pinned item 1-9
-- `Cmd+Shift+V` - Show clipboard history window
-- `Escape` - Close windows/menus
-- `Arrow keys`

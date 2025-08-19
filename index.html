@@ -62,31 +62,17 @@
                     </div>
                 </div>
                 <div class="tab-pane" id="shortcutsTab">
-                    <div class="shortcut-list">
-                        <div class="shortcut-item">
-                            <span class="shortcut-key">CMD + ALT + V</span>
-                            <span class="shortcut-description">Show paste menu</span>
-                        </div>
-                        <div class="shortcut-item">
-                            <span class="shortcut-key">CMD + ALT + A</span>
-                            <span class="shortcut-description">Add manual item to pinned</span>
-                        </div>
-                        <div class="shortcut-item">
-                            <span class="shortcut-key">CMD + ALT + 1-9</span>
-                            <span class="shortcut-description">Quick paste by index</span>
-                        </div>
-                        <div class="shortcut-item">
-                            <span class="shortcut-key">CMD + SHIFT + V</span>
-                            <span class="shortcut-description">Show clipboard history</span>
-                        </div>
-                        <div class="shortcut-item">
-                            <span class="shortcut-key">CMD + SHIFT + 1-9</span>
-                            <span class="shortcut-description">Pinned items</span>
-                        </div>
-                        <div class="shortcut-item">
-                            <span class="shortcut-key">CTRL + ALT + M</span>
-                            <span class="shortcut-description">Replace merge tag content</span>
-                        </div>
+                    <div class="shortcuts-header">
+                        <h3>Current Shortcuts</h3>
+                        <button class="btn-customize-shortcuts" id="btnCustomizeShortcuts" title="Customize Shortcuts">
+                            <span>✏️ Customize</span>
+                        </button>
+                    </div>
+                    <div class="shortcut-list" id="shortcutsList">
+                        <!-- Shortcuts will be populated dynamically -->
+                    </div>
+                    <div class="shortcuts-footer">
+                        <p class="shortcuts-info">💡 All shortcuts can be customized in Settings</p>
                     </div>
                 </div>
             </div>

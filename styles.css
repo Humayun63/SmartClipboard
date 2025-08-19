@@ -1210,6 +1210,71 @@ body {
     color: var(--text-primary);
 }
 
+/* Shortcuts Header and Customization */
+.shortcuts-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 20px 8px;
+    border-bottom: 1px solid var(--border-color);
+    margin-bottom: 16px;
+}
+
+.shortcuts-header h3 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.btn-customize-shortcuts {
+    padding: 8px 16px;
+    background: var(--accent-gradient);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.btn-customize-shortcuts:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+.shortcut-group {
+    margin-bottom: 20px;
+}
+
+.shortcut-group h4 {
+    margin: 0 0 12px 0;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    padding: 0 20px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.shortcuts-footer {
+    padding: 16px 20px;
+    border-top: 1px solid var(--border-color);
+    margin-top: 16px;
+}
+
+.shortcuts-info {
+    margin: 0;
+    font-size: 13px;
+    color: var(--text-secondary);
+    text-align: center;
+    font-style: italic;
+}
+
 /* Pin Modal Preview Styles */
 .pin-preview-container {
     border: 1px solid var(--border-color);

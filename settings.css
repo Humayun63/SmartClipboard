@@ -506,4 +506,153 @@ body {
 
 .tab-content.active {
     display: block;
+}
+
+/* Shortcut Management Styles */
+.shortcut-item.editable {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    margin-bottom: 8px;
+    background: var(--bg-primary);
+    flex-wrap: wrap;
+}
+
+.shortcut-label {
+    min-width: 120px;
+    font-weight: 500;
+    color: var(--text-primary);
+    font-size: 14px;
+}
+
+.shortcut-input {
+    padding: 8px 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    font-size: 13px;
+    font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace;
+    min-width: 160px;
+    transition: all 0.2s ease;
+}
+
+.shortcut-input:focus {
+    outline: none;
+    border-color: var(--accent-color);
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.shortcut-input.error {
+    border-color: #ff4757;
+    background: rgba(255, 71, 87, 0.1);
+}
+
+.shortcut-input.error:focus {
+    box-shadow: 0 0 0 3px rgba(255, 71, 87, 0.1);
+}
+
+.shortcut-description {
+    flex: 1;
+    color: var(--text-secondary);
+    font-size: 12px;
+    min-width: 200px;
+}
+
+.shortcut-section {
+    margin-top: 24px;
+}
+
+.shortcut-section h4 {
+    color: var(--text-primary);
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: 16px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.shortcut-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 8px;
+}
+
+.shortcut-grid .shortcut-item.editable {
+    margin-bottom: 0;
+}
+
+.shortcut-grid .shortcut-label {
+    min-width: 100px;
+}
+
+.shortcut-grid .shortcut-input {
+    min-width: 140px;
+    flex: 1;
+}
+
+.shortcut-actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 24px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border-color);
+}
+
+.btn-reset-shortcuts,
+.btn-save-shortcuts {
+    padding: 10px 20px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-save-shortcuts {
+    background: var(--accent-gradient);
+    color: white;
+    border-color: transparent;
+}
+
+.btn-reset-shortcuts:hover {
+    background: var(--bg-primary);
+    border-color: var(--accent-color);
+}
+
+.btn-save-shortcuts:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+/* Responsive design for shortcut management */
+@media (max-width: 768px) {
+    .shortcut-item.editable {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+    
+    .shortcut-label {
+        min-width: auto;
+    }
+    
+    .shortcut-input {
+        width: 100%;
+        min-width: auto;
+    }
+    
+    .shortcut-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .shortcut-actions {
+        flex-direction: column;
+    }
 } 
